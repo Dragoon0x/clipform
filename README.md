@@ -160,12 +160,14 @@ Both produce 512-dim vectors in CLIP's joint embedding space — so text → ima
 
 ## Roadmap
 
-- [ ] Crop-on-save
-- [ ] Smart auto-collections (k-means on stored embeddings)
-- [ ] Bulk tag operations from the selection action bar
-- [ ] Card-size slider
-- [ ] Sort options (date / color / similarity)
-- [ ] Companion browser extension for one-click web capture
+The next release plans out in [`docs/v0.2.0.md`](docs/v0.2.0.md). Theme: *make a growing library effortless to manage*. Tier-1 features:
+
+- [ ] Smart auto-collections — k-means on stored CLIP embeddings, with one-click create
+- [ ] Bulk operations in the action bar (tag all / move to collection / delete)
+- [ ] Sort + card-size controls in the top bar
+- [ ] Combined filters — text query + color + collection layered together
+
+Tier-2 (nice-to-have): crop-on-save, library-health panel, keyboard shortcuts. Browser extension and video support are out of scope and explained in the planning doc.
 
 ## Contributing
 
