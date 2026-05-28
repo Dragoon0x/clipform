@@ -1,0 +1,2291 @@
+<!doctype html>
+<html>
+<head>
+<meta charset="utf-8" />
+<style>
+  :root {
+    --bg: #1e1e1e;
+    --bg-2: #2c2c2c;
+    --bg-3: #383838;
+    --fg: #e6e6e6;
+    --fg-2: #a0a0a0;
+    --fg-3: #6b6b6b;
+    --accent: #18a0fb;
+    --danger: #f24822;
+    --border: rgba(255,255,255,0.08);
+    --radius: 6px;
+  }
+  * { box-sizing: border-box; }
+  html, body {
+    margin: 0; padding: 0; height: 100%;
+    background: var(--bg); color: var(--fg);
+    font: 12px/1.45 -apple-system, BlinkMacSystemFont, "Inter", sans-serif;
+    overflow: hidden;
+  }
+  body { display: flex; flex-direction: column; }
+
+  /* ---------- top bar ---------- */
+  .topbar {
+    display: flex; align-items: center; gap: 6px;
+    padding: 8px 10px; border-bottom: 1px solid var(--border);
+    background: var(--bg);
+  }
+  .search {
+    flex: 1; height: 28px; padding: 0 10px;
+    background: var(--bg-2); color: var(--fg);
+    border: 1px solid transparent; border-radius: var(--radius);
+    font: inherit; outline: none;
+  }
+  .search:focus { border-color: var(--accent); }
+  .icon-btn {
+    width: 28px; height: 28px; display: grid; place-items: center;
+    background: transparent; color: var(--fg-2);
+    border: 1px solid transparent; border-radius: var(--radius);
+    cursor: pointer; font-size: 14px;
+  }
+  .icon-btn:hover { background: var(--bg-2); color: var(--fg); }
+  .icon-btn.active { background: var(--bg-2); color: var(--fg); }
+
+  /* ---------- color row ---------- */
+  .colorbar {
+    display: flex; align-items: center; gap: 4px;
+    padding: 4px 10px 6px;
+    overflow-x: auto; scrollbar-width: none;
+  }
+  .colorbar::-webkit-scrollbar { display: none; }
+  .swatch {
+    flex: 0 0 auto; width: 18px; height: 18px;
+    border-radius: 50%; cursor: pointer;
+    border: 2px solid transparent; outline: 1px solid var(--border);
+  }
+  .swatch.active { border-color: var(--fg); }
+  .swatch.clear {
+    background: var(--bg-2); display: grid; place-items: center;
+    color: var(--fg-2); font-size: 10px; outline: none; border: 1px dashed var(--fg-3);
+  }
+
+  /* ---------- main split ---------- */
+  .main {
+    flex: 1; display: flex; min-height: 0;
+  }
+  .sidebar {
+    width: 130px; flex: 0 0 130px;
+    border-right: 1px solid var(--border);
+    padding: 6px 5px; overflow-y: auto;
+  }
+  .side-item {
+    display: flex; align-items: center; gap: 8px;
+    padding: 4px 6px; border-radius: var(--radius);
+    cursor: pointer; color: var(--fg-2);
+  }
+  .side-item:hover { background: var(--bg-2); color: var(--fg); }
+  .side-item.active { background: var(--bg-2); color: var(--fg); }
+  .side-item .cover {
+    width: 32px; height: 32px; flex: 0 0 32px;
+    border-radius: 4px;
+    background: var(--bg-3) center/cover no-repeat;
+  }
+  .side-item .cover.empty { background: var(--bg-3); }
+  .side-item .meta {
+    flex: 1; min-width: 0;
+  }
+  .side-item .name-row {
+    display: flex; align-items: baseline; gap: 4px;
+    justify-content: space-between;
+  }
+  .side-item .name {
+    white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+    font-size: 11px;
+  }
+  .side-item .count { color: var(--fg-3); font-size: 10px; flex-shrink: 0; }
+  .side-item .palette {
+    display: flex; gap: 2px; margin-top: 3px; height: 6px;
+  }
+  .side-item .palette .dot {
+    width: 6px; height: 6px; border-radius: 50%;
+    outline: 1px solid var(--border);
+  }
+  .side-section {
+    font-size: 10px; text-transform: uppercase; letter-spacing: 0.05em;
+    color: var(--fg-3); padding: 10px 8px 4px;
+  }
+  .side-add {
+    display: flex; align-items: center; gap: 4px;
+    padding: 6px 8px; color: var(--accent);
+    cursor: pointer; border-radius: var(--radius); font-size: 12px;
+  }
+  .side-add:hover { background: var(--bg-2); }
+  .side-nav-item {
+    display: flex; align-items: center; gap: 8px;
+    padding: 7px 8px; border-radius: var(--radius);
+    cursor: pointer; color: var(--fg-2);
+    font-size: 12px;
+  }
+  .side-nav-item:hover { background: var(--bg-2); color: var(--fg); }
+  .side-nav-item.active { background: var(--bg-2); color: var(--fg); }
+  .side-nav-item .icon { font-size: 14px; line-height: 1; }
+  .side-add-input {
+    padding: 4px 6px;
+  }
+  .side-add-input input {
+    width: 100%;
+    background: var(--bg-2); color: var(--fg);
+    border: 1px solid var(--accent);
+    border-radius: var(--radius);
+    padding: 4px 8px;
+    font: inherit; font-size: 12px;
+    outline: none;
+  }
+
+  /* ---------- card author / reactions footer ---------- */
+  .card .meta-row {
+    display: flex; align-items: center; justify-content: space-between;
+    gap: 6px; padding: 5px 6px 6px;
+    font-size: 10px; color: var(--fg-3);
+    background: var(--bg-2);
+  }
+  .card .author { flex: 1; min-width: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .card .author .who { color: var(--fg-2); }
+  .card .author .src { color: var(--fg-3); cursor: pointer; }
+  .card .author .src:hover { color: var(--accent); }
+  .card .reactions {
+    display: flex; gap: 3px; flex-shrink: 0;
+  }
+  .card .reactions .rx {
+    background: var(--bg-3); color: var(--fg-2);
+    border-radius: 8px; padding: 1px 5px;
+    font-size: 10px; line-height: 1.3; cursor: pointer;
+    border: 1px solid transparent;
+  }
+  .card .reactions .rx:hover { color: var(--fg); }
+  .card .reactions .rx.mine { background: rgba(24,160,251,0.18); border-color: var(--accent); color: var(--fg); }
+  .card .reactions .rx-add {
+    background: transparent; color: var(--fg-3);
+    opacity: 0; transition: opacity 80ms ease;
+    border-radius: 8px; padding: 1px 5px; cursor: pointer;
+    font-size: 10px; border: 1px dashed var(--border);
+  }
+  .card:hover .reactions .rx-add { opacity: 1; }
+  .rx-picker {
+    position: absolute; z-index: 80;
+    background: var(--bg-2); border: 1px solid var(--border);
+    border-radius: var(--radius); padding: 4px;
+    display: flex; gap: 2px; box-shadow: 0 4px 16px rgba(0,0,0,0.4);
+  }
+  .rx-picker button {
+    background: transparent; border: 0; cursor: pointer;
+    font-size: 16px; padding: 4px 6px; border-radius: 4px;
+  }
+  .rx-picker button:hover { background: var(--bg-3); }
+
+  /* ---------- comments thread (in detail drawer) ---------- */
+  .comments { margin-top: 4px; }
+  .comment {
+    display: flex; gap: 8px; padding: 8px 0;
+    border-top: 1px solid var(--border);
+  }
+  .comment:first-child { border-top: 0; }
+  .comment .avatar {
+    flex: 0 0 24px; width: 24px; height: 24px;
+    border-radius: 50%; background: var(--bg-3);
+    display: grid; place-items: center;
+    font-size: 11px; color: var(--fg);
+    text-transform: uppercase;
+  }
+  .comment .body { flex: 1; min-width: 0; }
+  .comment .who-line {
+    display: flex; align-items: baseline; gap: 6px;
+    font-size: 11px; color: var(--fg-3);
+  }
+  .comment .who-line .name { color: var(--fg); font-weight: 500; }
+  .comment .who-line .del {
+    margin-left: auto; color: var(--fg-3); cursor: pointer;
+    background: transparent; border: 0; font-size: 10px; padding: 0;
+  }
+  .comment .who-line .del:hover { color: var(--danger); }
+  .comment .text { font-size: 12px; color: var(--fg); margin-top: 2px; word-wrap: break-word; }
+  .comment-input-row {
+    display: flex; gap: 4px; margin-top: 6px;
+  }
+  .comment-input-row input {
+    flex: 1; background: var(--bg-2); color: var(--fg);
+    border: 1px solid transparent; border-radius: var(--radius);
+    padding: 6px 8px; font: inherit; outline: none;
+  }
+  .comment-input-row input:focus { border-color: var(--accent); }
+  .comment-input-row button {
+    background: var(--accent); color: white;
+    border: 0; border-radius: var(--radius);
+    padding: 6px 10px; font: inherit; font-size: 11px;
+    cursor: pointer;
+  }
+
+  /* ---------- lightbox (full-screen preview) ---------- */
+  .lightbox {
+    position: fixed; inset: 0; z-index: 200;
+    background: rgba(0,0,0,0.92);
+    display: none; align-items: center; justify-content: center;
+    padding: 24px;
+  }
+  .lightbox.open { display: flex; }
+  .lightbox img {
+    max-width: 100%; max-height: 100%;
+    object-fit: contain;
+    border-radius: 6px;
+    user-select: none;
+  }
+  .lightbox .lb-btn {
+    position: absolute;
+    background: rgba(255,255,255,0.08); color: white;
+    border: 0; width: 32px; height: 32px;
+    border-radius: 50%;
+    cursor: pointer; font-size: 16px;
+    display: grid; place-items: center;
+  }
+  .lightbox .lb-btn:hover { background: rgba(255,255,255,0.16); }
+  .lightbox .lb-close { top: 12px; right: 12px; }
+  .lightbox .lb-prev { left: 12px; top: 50%; transform: translateY(-50%); }
+  .lightbox .lb-next { right: 12px; top: 50%; transform: translateY(-50%); }
+  .lightbox .lb-counter {
+    position: absolute; bottom: 14px; left: 50%; transform: translateX(-50%);
+    color: rgba(255,255,255,0.7); font-size: 11px;
+    background: rgba(0,0,0,0.4); padding: 4px 10px; border-radius: 10px;
+  }
+  /* Make the detail-drawer preview affordance discoverable. */
+  .preview { cursor: zoom-in; position: relative; }
+  .preview::after {
+    content: '⤢'; position: absolute; top: 8px; right: 8px;
+    background: rgba(0,0,0,0.55); color: white;
+    width: 22px; height: 22px; border-radius: 4px;
+    display: grid; place-items: center;
+    font-size: 12px;
+    opacity: 0; transition: opacity 80ms ease;
+    pointer-events: none;
+  }
+  .preview:hover::after { opacity: 1; }
+
+  /* ---------- team feed view ---------- */
+  .feed-wrap {
+    flex: 1; overflow-y: auto; padding: 8px;
+  }
+  .feed-empty {
+    color: var(--fg-3); text-align: center;
+    padding: 40px 20px; font-size: 11px;
+  }
+  .feed-item {
+    display: flex; gap: 10px; padding: 8px 10px;
+    border-radius: var(--radius); cursor: pointer;
+  }
+  .feed-item:hover { background: var(--bg-2); }
+  .feed-item .thumb {
+    flex: 0 0 36px; width: 36px; height: 36px;
+    border-radius: 4px; background: var(--bg-3) center/cover no-repeat;
+  }
+  .feed-item .copy { flex: 1; min-width: 0; font-size: 11px; line-height: 1.4; }
+  .feed-item .copy .name { color: var(--fg); font-weight: 500; }
+  .feed-item .copy .verb { color: var(--fg-2); }
+  .feed-item .copy .quote { color: var(--fg-2); font-style: italic; }
+  .feed-item .when { color: var(--fg-3); font-size: 10px; flex-shrink: 0; }
+
+  /* ---------- card selection checkbox ---------- */
+  .card .check {
+    position: absolute; top: 6px; left: 6px;
+    width: 20px; height: 20px; border-radius: 50%;
+    background: rgba(0,0,0,0.45);
+    border: 1.5px solid rgba(255,255,255,0.85);
+    display: grid; place-items: center;
+    color: white; font-size: 12px; line-height: 1;
+    cursor: pointer;
+    opacity: 0;
+    transition: opacity 80ms ease, background 80ms ease, border-color 80ms ease;
+    z-index: 2;
+  }
+  .card:hover .check, .card .check.checked { opacity: 1; }
+  .card .check.checked {
+    background: var(--accent);
+    border-color: var(--accent);
+  }
+  .card.selected { border-color: var(--accent); }
+  .card.selected::after {
+    content: ''; position: absolute; inset: 0;
+    background: rgba(24, 160, 251, 0.12);
+    pointer-events: none;
+  }
+
+  /* ---------- action bar (multi-select footer) ---------- */
+  .action-bar {
+    position: fixed; bottom: 0; left: 0; right: 0;
+    padding: 10px 12px;
+    background: var(--bg-2);
+    border-top: 1px solid var(--border);
+    display: flex; align-items: center; gap: 8px;
+    z-index: 60;
+  }
+  .action-bar .count {
+    flex: 1; font-size: 12px; color: var(--fg);
+  }
+  .action-bar .arrange-btn {
+    background: var(--accent); color: white;
+    padding: 6px 12px; border-radius: var(--radius);
+    border: 0; cursor: pointer; font: inherit; font-weight: 500;
+  }
+  .action-bar .arrange-btn:hover { filter: brightness(1.1); }
+  .action-bar .cancel-btn {
+    background: transparent; color: var(--fg-2);
+    padding: 6px 10px; border-radius: var(--radius);
+    border: 0; cursor: pointer; font: inherit;
+  }
+  .action-bar .cancel-btn:hover { color: var(--fg); background: var(--bg-3); }
+
+  .arrange-menu {
+    position: fixed; bottom: 56px; right: 12px;
+    background: var(--bg-2);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 4px;
+    display: none;
+    z-index: 70;
+    min-width: 180px;
+    box-shadow: 0 4px 16px rgba(0,0,0,0.4);
+  }
+  .arrange-menu.open { display: block; }
+  .arrange-menu button {
+    display: block; width: 100%; text-align: left;
+    background: transparent; color: var(--fg);
+    border: 0; padding: 8px 12px; border-radius: 4px;
+    cursor: pointer; font: inherit; font-size: 12px;
+  }
+  .arrange-menu button:hover { background: var(--bg-3); }
+  .arrange-menu .menu-sub {
+    display: block; font-size: 10px; color: var(--fg-3); margin-top: 2px;
+  }
+
+  /* ---------- grid ---------- */
+  .grid-wrap {
+    flex: 1; overflow-y: auto; padding: 10px;
+    position: relative;
+  }
+  .grid {
+    column-count: 2; column-gap: 8px;
+  }
+  .card {
+    break-inside: avoid;
+    margin-bottom: 8px;
+    background: var(--bg-2); border-radius: var(--radius);
+    overflow: hidden; cursor: pointer;
+    position: relative;
+    border: 1px solid transparent;
+    transition: border-color 80ms ease;
+  }
+  .card:hover { border-color: var(--border); }
+  .card img { display: block; width: 100%; height: auto; }
+  .card .overlay {
+    position: absolute; inset: auto 0 0 0;
+    padding: 24px 6px 6px;
+    background: linear-gradient(to top, rgba(0,0,0,0.7), transparent);
+    display: flex; gap: 4px; opacity: 0;
+    transition: opacity 80ms ease;
+  }
+  .card:hover .overlay { opacity: 1; }
+  .card .overlay button {
+    background: rgba(0,0,0,0.5); color: white; border: 0;
+    padding: 3px 6px; border-radius: 4px; font-size: 10px;
+    cursor: pointer;
+  }
+  .card .overlay button:hover { background: rgba(0,0,0,0.8); }
+  .card .overlay button.danger:hover { background: var(--danger); }
+
+  .empty {
+    position: absolute; inset: 0;
+    display: flex; flex-direction: column; align-items: center; justify-content: center;
+    color: var(--fg-3); text-align: center; padding: 40px;
+    pointer-events: none;
+  }
+  .empty .big { font-size: 32px; margin-bottom: 8px; }
+  .empty .hint { font-size: 11px; max-width: 220px; line-height: 1.5; }
+  .empty kbd {
+    background: var(--bg-2); padding: 1px 4px; border-radius: 3px;
+    font-family: ui-monospace, monospace; font-size: 10px; color: var(--fg-2);
+  }
+
+  /* ---------- drop overlay ---------- */
+  .drop-overlay {
+    position: fixed; inset: 0; pointer-events: none;
+    border: 2px dashed transparent; transition: all 120ms ease;
+    display: grid; place-items: center;
+    background: transparent; z-index: 50;
+  }
+  .drop-overlay.active {
+    border-color: var(--accent);
+    background: rgba(24, 160, 251, 0.08);
+    pointer-events: auto;
+  }
+  .drop-overlay .label {
+    background: var(--accent); color: white;
+    padding: 8px 14px; border-radius: 6px;
+    font-weight: 500; opacity: 0;
+  }
+  .drop-overlay.active .label { opacity: 1; }
+
+  /* ---------- detail drawer ---------- */
+  .drawer {
+    position: fixed; top: 0; right: 0; bottom: 0; width: 100%;
+    background: var(--bg); z-index: 100;
+    transform: translateX(100%); transition: transform 160ms ease;
+    display: flex; flex-direction: column;
+  }
+  .drawer.open { transform: translateX(0); }
+  .drawer-head {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 8px 10px; border-bottom: 1px solid var(--border);
+  }
+  .drawer-head .title { font-weight: 500; }
+  .drawer-body {
+    flex: 1; overflow-y: auto; padding: 12px;
+  }
+  .preview {
+    width: 100%; background: var(--bg-2); border-radius: var(--radius);
+    margin-bottom: 12px;
+  }
+  .preview img { width: 100%; display: block; border-radius: var(--radius); }
+  .field { margin-bottom: 12px; }
+  .field label {
+    display: block; font-size: 10px; text-transform: uppercase;
+    letter-spacing: 0.05em; color: var(--fg-3); margin-bottom: 4px;
+  }
+  .field input, .field select, .field textarea {
+    width: 100%; background: var(--bg-2); color: var(--fg);
+    border: 1px solid transparent; border-radius: var(--radius);
+    padding: 6px 8px; font: inherit; outline: none;
+  }
+  .field input:focus, .field select:focus, .field textarea:focus { border-color: var(--accent); }
+  .tags-row { display: flex; flex-wrap: wrap; gap: 4px; margin-bottom: 6px; }
+  .tag {
+    background: var(--bg-2); padding: 2px 8px; border-radius: 10px;
+    font-size: 11px; display: inline-flex; align-items: center; gap: 4px;
+  }
+  .tag .x { color: var(--fg-3); cursor: pointer; }
+  .tag .x:hover { color: var(--danger); }
+  .colors-row { display: flex; gap: 4px; }
+  .colors-row .swatch { width: 22px; height: 22px; cursor: default; outline-color: var(--border); }
+  .actions {
+    display: flex; gap: 6px; padding: 10px;
+    border-top: 1px solid var(--border);
+  }
+  .btn {
+    flex: 1; padding: 8px; border-radius: var(--radius);
+    border: 0; cursor: pointer; font: inherit; font-weight: 500;
+  }
+  .btn.primary { background: var(--accent); color: white; }
+  .btn.primary:hover { filter: brightness(1.1); }
+  .btn.ghost { background: var(--bg-2); color: var(--fg); }
+  .btn.ghost:hover { background: var(--bg-3); }
+  .btn.danger { background: transparent; color: var(--danger); }
+  .btn.danger:hover { background: rgba(242, 72, 34, 0.1); }
+
+  /* ---------- settings drawer ---------- */
+  .settings-help {
+    color: var(--fg-3); font-size: 11px; line-height: 1.5; margin-bottom: 12px;
+  }
+  .settings-help a { color: var(--accent); }
+
+  /* ---------- visual search status & similar-mode banner ---------- */
+  .model-chip {
+    padding: 4px 10px; font-size: 10px;
+    display: flex; align-items: center; gap: 6px;
+    border-bottom: 1px solid var(--border);
+    color: var(--fg-3); background: var(--bg);
+  }
+  .model-chip.loading { color: var(--accent); }
+  .model-chip.error { color: var(--danger); }
+  .model-chip .dot {
+    width: 6px; height: 6px; border-radius: 50%;
+    background: currentColor; opacity: 0.7;
+  }
+
+  .similar-banner {
+    padding: 6px 10px; gap: 8px;
+    display: flex; align-items: center;
+    background: var(--bg-2); border-bottom: 1px solid var(--border);
+    font-size: 11px; color: var(--fg-2);
+  }
+  .similar-banner img {
+    width: 24px; height: 24px; border-radius: 4px;
+    object-fit: cover; flex: 0 0 24px;
+  }
+  .similar-banner .clear {
+    margin-left: auto; background: transparent; color: var(--accent);
+    border: 0; cursor: pointer; font: inherit; padding: 2px 6px;
+  }
+  .similar-banner .clear:hover { color: var(--fg); }
+
+  .card .sim {
+    position: absolute; top: 4px; left: 4px;
+    background: rgba(0,0,0,0.65); color: white;
+    padding: 1px 5px; border-radius: 3px;
+    font-size: 9px; font-feature-settings: "tnum" 1;
+    opacity: 0; transition: opacity 80ms ease;
+  }
+  .card:hover .sim { opacity: 1; }
+</style>
+
+<script type="module">
+  // Visual search: load CLIP via Transformers.js from jsDelivr.
+  // Exposes window.__clipform with status and extractor; main script reads from it.
+  window.__clipform = window.__clipform || {};
+  window.__clipform.status = 'loading';
+  window.__clipform.progress = 0;
+
+  // Figma's plugin iframe doesn't expose the standard Cache API that
+  // Transformers.js uses to cache model files. Polyfill it with an
+  // IndexedDB-backed shim BEFORE the library is imported, so the env
+  // check passes and the (~40MB) model is reused across plugin opens.
+  if (typeof self !== 'undefined' && !self.caches) {
+    let dbPromise = null;
+    function getDB() {
+      if (!dbPromise) {
+        dbPromise = new Promise(function (resolve, reject) {
+          const req = indexedDB.open('clipform-model-cache', 1);
+          req.onupgradeneeded = function () { req.result.createObjectStore('files'); };
+          req.onsuccess = function () { resolve(req.result); };
+          req.onerror = function () { reject(req.error); };
+        });
+      }
+      return dbPromise;
+    }
+    function idbGet(key) {
+      return getDB().then(function (db) {
+        return new Promise(function (resolve) {
+          try {
+            const tx = db.transaction('files', 'readonly');
+            const r = tx.objectStore('files').get(key);
+            r.onsuccess = function () { resolve(r.result); };
+            r.onerror = function () { resolve(null); };
+          } catch (e) { resolve(null); }
+        });
+      }).catch(function () { return null; });
+    }
+    function idbPut(key, value) {
+      return getDB().then(function (db) {
+        return new Promise(function (resolve) {
+          try {
+            const tx = db.transaction('files', 'readwrite');
+            const r = tx.objectStore('files').put(value, key);
+            r.onsuccess = function () { resolve(); };
+            r.onerror = function () { resolve(); };
+          } catch (e) { resolve(); }
+        });
+      }).catch(function () {});
+    }
+    const idbCache = {
+      match: async function (request) {
+        const url = typeof request === 'string' ? request : request.url;
+        const cached = await idbGet(url);
+        if (!cached) return undefined;
+        return new Response(cached.bytes, {
+          headers: { 'content-type': cached.type || 'application/octet-stream' }
+        });
+      },
+      put: async function (request, response) {
+        try {
+          const url = typeof request === 'string' ? request : request.url;
+          const clone = response.clone();
+          const bytes = await clone.arrayBuffer();
+          const type = response.headers.get('content-type') || 'application/octet-stream';
+          await idbPut(url, { bytes: bytes, type: type });
+        } catch (e) { /* ignore caching errors */ }
+      },
+      delete: async function () { return false; },
+      keys: async function () { return []; }
+    };
+    self.caches = {
+      open: async function () { return idbCache; },
+      has: async function () { return true; },
+      delete: async function () { return false; },
+      keys: async function () { return []; },
+      match: async function (request) { return idbCache.match(request); }
+    };
+  }
+
+  (async function () {
+    try {
+      const T = await import('https://cdn.jsdelivr.net/npm/@xenova/transformers@2.17.2');
+      T.env.allowLocalModels = false;
+      T.env.useBrowserCache = true;
+
+      const MODEL = 'Xenova/clip-vit-base-patch32';
+      function progressCb(p) {
+        if (p && p.status === 'progress' && typeof p.progress === 'number') {
+          window.__clipform.progress = Math.round(p.progress);
+          if (typeof window.__clipform.onProgress === 'function') {
+            window.__clipform.onProgress(p.progress);
+          }
+        }
+      }
+
+      // Load vision + text encoders separately so embeddings live in CLIP's
+      // shared joint space. The image-feature-extraction pipeline alone can't
+      // do text → image search; the dedicated *WithProjection models can.
+      const [tokenizer, processor, visionModel, textModel] = await Promise.all([
+        T.AutoTokenizer.from_pretrained(MODEL),
+        T.AutoProcessor.from_pretrained(MODEL),
+        T.CLIPVisionModelWithProjection.from_pretrained(MODEL, { quantized: true, progress_callback: progressCb }),
+        T.CLIPTextModelWithProjection.from_pretrained(MODEL, { quantized: true, progress_callback: progressCb })
+      ]);
+
+      function l2norm(arr) {
+        let sum = 0;
+        for (let i = 0; i < arr.length; i++) sum += arr[i] * arr[i];
+        const mag = Math.sqrt(sum) || 1;
+        const out = new Float32Array(arr.length);
+        for (let i = 0; i < arr.length; i++) out[i] = arr[i] / mag;
+        return out;
+      }
+
+      window.__clipform.embedImage = async function (blob) {
+        const image = await T.RawImage.fromBlob(blob);
+        const inputs = await processor(image);
+        const out = await visionModel(inputs);
+        // image_embeds is a [1, 512] tensor projected into CLIP joint space
+        return l2norm(out.image_embeds.data);
+      };
+
+      window.__clipform.embedText = async function (text) {
+        const inputs = tokenizer([String(text)], { padding: true, truncation: true });
+        const out = await textModel(inputs);
+        return l2norm(out.text_embeds.data);
+      };
+
+      // Keep legacy "extractor" alias so existing code that referenced it
+      // doesn't crash if loaded before the next reload. It just calls embedImage.
+      window.__clipform.extractor = async function (urlOrBlob) {
+        let blob;
+        if (typeof urlOrBlob === 'string') {
+          const r = await fetch(urlOrBlob);
+          blob = await r.blob();
+        } else {
+          blob = urlOrBlob;
+        }
+        const vec = await window.__clipform.embedImage(blob);
+        return { data: vec };
+      };
+
+      window.__clipform.status = 'ready';
+      if (typeof window.__clipform.onReady === 'function') window.__clipform.onReady();
+    } catch (err) {
+      window.__clipform.status = 'error';
+      window.__clipform.error = (err && err.message) ? err.message : String(err);
+      console.error('Clipform: visual search model load failed', err);
+      if (typeof window.__clipform.onError === 'function') window.__clipform.onError(err);
+    }
+  })();
+</script>
+</head>
+<body>
+
+  <!-- top bar -->
+  <div class="topbar">
+    <input id="search" class="search" placeholder="Search tags · ↵ for AI search" />
+    <button class="icon-btn" id="save-selection-btn" title="Save Figma selection to library">＋</button>
+    <button class="icon-btn" id="settings-btn" title="Settings">⚙</button>
+  </div>
+
+  <!-- color filter row -->
+  <div class="colorbar" id="colorbar"></div>
+
+  <!-- visual search status (visible while loading / on error) -->
+  <div class="model-chip" id="model-chip" style="display:none"></div>
+
+  <!-- similar-mode banner (visible when sorting by similarity to a reference) -->
+  <div class="similar-banner" id="similar-banner" style="display:none"></div>
+
+  <div class="main">
+    <!-- sidebar -->
+    <div class="sidebar" id="sidebar"></div>
+
+    <!-- grid -->
+    <div class="grid-wrap" id="grid-wrap">
+      <div class="grid" id="grid"></div>
+      <div class="empty" id="empty">
+        <div class="big">📌</div>
+        <div class="hint">
+          Click in this panel, then paste (<kbd>⌘V</kbd>) or drop an image file here.<br><br>
+          Or select something on the Figma canvas and click <kbd>＋</kbd> above.
+        </div>
+      </div>
+    </div>
+    <!-- team feed view (hidden by default; toggled from the sidebar "Activity" row) -->
+    <div class="feed-wrap" id="feed-wrap" style="display:none"></div>
+  </div>
+
+  <div class="drop-overlay" id="drop-overlay">
+    <div class="label">Drop to add to library</div>
+  </div>
+
+  <!-- lightbox: full-screen image preview with prev/next nav -->
+  <div class="lightbox" id="lightbox">
+    <button class="lb-btn lb-prev" id="lb-prev" type="button" title="Previous (←)">‹</button>
+    <img id="lb-img" alt="" />
+    <button class="lb-btn lb-next" id="lb-next" type="button" title="Next (→)">›</button>
+    <button class="lb-btn lb-close" id="lb-close" type="button" title="Close (Esc)">✕</button>
+    <div class="lb-counter" id="lb-counter"></div>
+  </div>
+
+  <!-- multi-select action bar (shown only when refs are selected via checkbox) -->
+  <div class="action-bar" id="action-bar" style="display:none">
+    <span class="count" id="action-count">0 selected</span>
+    <button class="arrange-btn" id="arrange-btn" type="button">Arrange ▾</button>
+    <button class="cancel-btn" id="cancel-btn" type="button">Clear</button>
+  </div>
+
+  <!-- layout picker (anchored to arrange button) -->
+  <div class="arrange-menu" id="arrange-menu">
+    <button data-layout="grid" type="button">▦ Grid<span class="menu-sub">Uniform square cells</span></button>
+    <button data-layout="masonry" type="button">▥ Masonry<span class="menu-sub">2 or 3 variable-height columns</span></button>
+    <button data-layout="hero" type="button">⬛ Hero + thumbs<span class="menu-sub">First ref large, rest as a strip</span></button>
+    <button data-layout="magazine" type="button">📰 Magazine<span class="menu-sub">Hero left, 2-col grid right</span></button>
+    <button data-layout="filmstrip" type="button">▮ Filmstrip<span class="menu-sub">Vertical column, equal width</span></button>
+    <button data-layout="row" type="button">▬ Row<span class="menu-sub">Horizontal row, equal height</span></button>
+    <button data-layout="polaroid" type="button">🖼️ Polaroid<span class="menu-sub">Rotated overlapping cards</span></button>
+  </div>
+
+  <!-- detail drawer -->
+  <div class="drawer" id="detail-drawer">
+    <div class="drawer-head">
+      <div class="title">Reference</div>
+      <button class="icon-btn" onclick="closeDetail()">✕</button>
+    </div>
+    <div class="drawer-body" id="detail-body"></div>
+    <div class="actions" id="detail-actions"></div>
+  </div>
+
+  <!-- settings drawer -->
+  <div class="drawer" id="settings-drawer">
+    <div class="drawer-head">
+      <div class="title">Settings</div>
+      <button class="icon-btn" onclick="closeSettings()">✕</button>
+    </div>
+    <div class="drawer-body">
+      <div class="field">
+        <label>OpenAI API key (optional, BYOK)</label>
+        <input id="api-key" type="password" placeholder="sk-…" autocomplete="off" />
+      </div>
+      <div class="settings-help">
+        When set, new references are auto-tagged using <code>gpt-4o-mini</code> vision.
+        Your key is stored locally in your Figma client (<code>clientStorage</code>) and
+        is only sent to <code>api.openai.com</code>. Leave blank to keep the plugin fully offline.
+      </div>
+      <div class="actions" style="padding: 0; border: 0;">
+        <button class="btn primary" onclick="saveApiKey()">Save</button>
+        <button class="btn ghost" onclick="clearApiKey()">Clear</button>
+      </div>
+      <div class="settings-help" style="margin-top: 20px;">
+        Clipform is open source and free. Your library lives as a hidden page in this Figma file —
+        no servers, no logins.
+      </div>
+    </div>
+  </div>
+
+<script>
+  // ============================================================
+  // state
+  // ============================================================
+  const state = {
+    refs: [],
+    collections: [],
+    selectedCollection: 'all', // 'all' | 'untagged' | collectionId
+    selectedColors: new Set(),
+    searchQuery: '',
+    openRefId: null,
+    blobUrls: new Map(),    // refId -> objectURL
+    apiKey: '',
+    embeddings: new Map(),  // refId -> Float32Array (decoded from pluginData)
+    modelStatus: 'loading', // 'loading' | 'ready' | 'error' | 'disabled'
+    modelProgress: 0,
+    modelError: '',
+    backfillProgress: '',   // e.g. "12/40" while indexing existing refs
+    similarTo: null,        // refId currently being used as the similarity query
+    similarScores: new Map(), // refId -> cosine similarity (when in similar mode)
+    selectedRefs: new Set(), // refIds picked via checkbox for the Arrange action
+    newCollectionMode: false, // when true, sidebar shows an inline input instead of the + button
+    currentUser: { id: '', name: 'You', photoUrl: '', color: '' }, // populated from library push
+    viewMode: 'grid',       // 'grid' | 'feed' — feed = chronological team activity
+    textQuery: '',          // CLIP text query string (set when user hits Enter on a query)
+    textQueryEmbedding: null, // Float32Array of the embedded text query (null when not in text-search mode)
+    lightboxIndex: -1       // index in current visibleRefs() of the ref shown in the lightbox (-1 = closed)
+  };
+
+  // ============================================================
+  // messaging
+  // ============================================================
+  function send(msg) {
+    parent.postMessage({ pluginMessage: msg }, '*');
+  }
+
+  function notify(message) {
+    send({ type: 'notify', message });
+  }
+
+  // ============================================================
+  // visual search: embeddings + cosine similarity (pure JS)
+  // ============================================================
+  // Embeddings are L2-normalized 512-dim Float32Array (from CLIP).
+  // Since both vectors are unit length, cosine similarity is just the dot product.
+  function cosineSimilarity(a, b) {
+    if (!a || !b || a.length !== b.length) return -1;
+    let dot = 0;
+    for (let i = 0; i < a.length; i++) dot += a[i] * b[i];
+    return dot;
+  }
+
+  // Float32Array <-> base64 round-trip for pluginData storage. Chunked
+  // String.fromCharCode keeps large arrays off the call stack.
+  function floatArrayToBase64(arr) {
+    const bytes = new Uint8Array(arr.buffer, arr.byteOffset, arr.byteLength);
+    let binary = '';
+    const chunk = 0x8000;
+    for (let i = 0; i < bytes.length; i += chunk) {
+      binary += String.fromCharCode.apply(null, bytes.subarray(i, i + chunk));
+    }
+    return btoa(binary);
+  }
+  function base64ToFloatArray(b64) {
+    try {
+      const binary = atob(b64);
+      const bytes = new Uint8Array(binary.length);
+      for (let i = 0; i < binary.length; i++) bytes[i] = binary.charCodeAt(i);
+      const usable = Math.floor(bytes.byteLength / 4) * 4;
+      return new Float32Array(bytes.buffer, bytes.byteOffset, usable / 4);
+    } catch (e) {
+      return null;
+    }
+  }
+
+  // Runs CLIP's vision encoder on a Blob and returns a normalized 512-dim
+  // Float32Array in the joint embedding space (same space as text embeddings,
+  // so text→image search works). Returns null if model isn't ready.
+  async function computeEmbedding(blob) {
+    const cf = window.__clipform;
+    if (!cf || cf.status !== 'ready' || !cf.embedImage) return null;
+    try {
+      return await cf.embedImage(blob);
+    } catch (e) {
+      console.warn('Clipform: image embedding failed', e);
+      return null;
+    }
+  }
+
+  // Embed a free-text query into the same 512-dim CLIP joint space.
+  async function embedTextQuery(text) {
+    const cf = window.__clipform;
+    if (!cf || cf.status !== 'ready' || !cf.embedText) return null;
+    const q = String(text || '').trim();
+    if (!q) return null;
+    try {
+      return await cf.embedText(q);
+    } catch (e) {
+      console.warn('Clipform: text embedding failed', e);
+      return null;
+    }
+  }
+
+  // Bridge to the module script that loaded the model. Either runs first
+  // (so this assignment captures the eventual callback) or has already
+  // resolved (in which case we catch up via the status check below).
+  window.__clipform = window.__clipform || {};
+  window.__clipform.onReady = function () {
+    state.modelStatus = 'ready';
+    renderStatusChip();
+    backfillEmbeddings();
+  };
+  window.__clipform.onError = function (err) {
+    state.modelStatus = 'error';
+    state.modelError = (err && err.message) ? err.message : String(err);
+    renderStatusChip();
+  };
+  window.__clipform.onProgress = function (p) {
+    state.modelProgress = Math.round(p);
+    renderStatusChip();
+  };
+  if (window.__clipform.status === 'ready') {
+    window.__clipform.onReady();
+  } else if (window.__clipform.status === 'error') {
+    window.__clipform.onError(new Error(window.__clipform.error || 'unknown error'));
+  }
+
+  window.onmessage = (event) => {
+    const msg = event.data.pluginMessage;
+    if (!msg) return;
+    if (msg.type === 'library') {
+      // free old blob URLs
+      for (const url of state.blobUrls.values()) URL.revokeObjectURL(url);
+      state.blobUrls.clear();
+      state.embeddings.clear();
+      state.refs = msg.refs || [];
+      state.collections = msg.collections || [];
+      if (msg.currentUser) state.currentUser = msg.currentUser;
+      // make blob URLs for thumbs + decode stored embeddings
+      for (const r of state.refs) {
+        if (r.bytes) {
+          const blob = new Blob([new Uint8Array(r.bytes)]);
+          state.blobUrls.set(r.id, URL.createObjectURL(blob));
+        }
+        if (r.embedding) {
+          const arr = base64ToFloatArray(r.embedding);
+          if (arr) state.embeddings.set(r.id, arr);
+        }
+      }
+      render();
+      // if the model is ready, fill in any embeddings that aren't stored yet
+      if (state.modelStatus === 'ready') backfillEmbeddings();
+    }
+    if (msg.type === 'settings') {
+      state.apiKey = msg.apiKey || '';
+      document.getElementById('api-key').value = state.apiKey;
+    }
+    if (msg.type === 'selection-exports') {
+      const exports = msg.exports || [];
+      if (!exports.length) return;
+      notify(exports.length === 1 ? 'Saving selection…' : `Saving ${exports.length} from selection…`);
+      (async () => {
+        for (const item of exports) {
+          const blob = new Blob([new Uint8Array(item.bytes)], { type: 'image/png' });
+          await addFromBlob(blob, item.name);
+        }
+      })();
+    }
+    if (msg.type === 'error') {
+      console.error(msg.message);
+    }
+  };
+
+  send({ type: 'init' });
+
+  // ============================================================
+  // capture: paste + drag
+  // ============================================================
+  document.addEventListener('paste', async (e) => {
+    if (!e.clipboardData) return;
+    for (const item of e.clipboardData.items) {
+      if (item.type && item.type.startsWith('image/')) {
+        const file = item.getAsFile();
+        if (file) await addFromBlob(file);
+      }
+    }
+  });
+
+  const dropOverlay = document.getElementById('drop-overlay');
+  let dragDepth = 0;
+  window.addEventListener('dragenter', (e) => {
+    e.preventDefault();
+    dragDepth++;
+    dropOverlay.classList.add('active');
+  });
+  window.addEventListener('dragleave', (e) => {
+    e.preventDefault();
+    dragDepth--;
+    if (dragDepth <= 0) {
+      dragDepth = 0;
+      dropOverlay.classList.remove('active');
+    }
+  });
+  window.addEventListener('dragover', (e) => { e.preventDefault(); });
+  window.addEventListener('drop', async (e) => {
+    e.preventDefault();
+    dragDepth = 0;
+    dropOverlay.classList.remove('active');
+    if (!e.dataTransfer) return;
+
+    // 1) OS-level files (Finder, etc) and some browsers that include image bytes
+    let handledFile = 0;
+    for (const file of e.dataTransfer.files) {
+      if (file.type && file.type.startsWith('image/')) {
+        await addFromBlob(file);
+        handledFile++;
+      }
+    }
+    if (handledFile > 0) return;
+
+    // 2) Browser-tab drags — images come through as URLs in dataTransfer.
+    //    Capture the *source* URL too (preferring an <a href> wrapping the
+    //    image, falling back to the image URL itself) so we can later show
+    //    "↗ source" attribution on the card.
+    const urls = extractImageUrls(e.dataTransfer);
+    const sourceUrl = extractSourceUrl(e.dataTransfer);
+    if (!urls.length) return;
+
+    notify(urls.length === 1 ? 'Fetching image…' : `Fetching ${urls.length} images…`);
+    let saved = 0, failed = 0;
+    for (const url of urls) {
+      const blob = await tryFetchImageAsBlob(url);
+      if (blob) { await addFromBlob(blob, null, sourceUrl || url); saved++; }
+      else { failed++; console.warn('Clipform: could not fetch', url); }
+    }
+    if (failed > 0) {
+      notify(saved > 0
+        ? `Saved ${saved}; ${failed} blocked by CORS`
+        : `Couldn't fetch image (CORS blocked, fallback failed)`);
+    }
+  });
+
+  async function addFromBlob(blob, name, sourceUrl) {
+    const bytes = new Uint8Array(await blob.arrayBuffer());
+    const colors = await extractDominantColors(blob);
+    let tags = [];
+    if (state.apiKey) {
+      try { tags = await aiAutoTag(blob); }
+      catch (e) { console.warn('AI tagging failed', e); }
+    }
+    let embedding = null;
+    if (state.modelStatus === 'ready') {
+      const emb = await computeEmbedding(blob);
+      if (emb) embedding = floatArrayToBase64(emb);
+    }
+    const collectionId = state.selectedCollection !== 'all' && state.selectedCollection !== 'untagged'
+      ? state.selectedCollection : null;
+    send({
+      type: 'add-reference',
+      bytes: Array.from(bytes),
+      colors,
+      tags,
+      collectionId,
+      name: name || undefined,
+      embedding,
+      sourceUrl: sourceUrl || null
+    });
+  }
+
+  // ============================================================
+  // backfill: index existing refs that don't have an embedding yet
+  // ============================================================
+  // Runs once the model is ready and whenever the library is reloaded.
+  // Sequential to avoid pegging the CPU; pushes each result back to the
+  // sandbox so embeddings persist across sessions and teammates.
+  let backfillRunning = false;
+  async function backfillEmbeddings() {
+    if (backfillRunning) return;
+    if (state.modelStatus !== 'ready') return;
+    const toFill = state.refs.filter(r => !state.embeddings.has(r.id) && state.blobUrls.has(r.id));
+    if (!toFill.length) return;
+    backfillRunning = true;
+    const total = toFill.length;
+    let done = 0;
+    for (const ref of toFill) {
+      const url = state.blobUrls.get(ref.id);
+      if (!url) { done++; continue; }
+      try {
+        const res = await fetch(url);
+        const blob = await res.blob();
+        const emb = await computeEmbedding(blob);
+        if (emb) {
+          state.embeddings.set(ref.id, emb);
+          send({ type: 'update-embedding', id: ref.id, embedding: floatArrayToBase64(emb) });
+        }
+      } catch (e) { /* per-ref failures are non-fatal */ }
+      done++;
+      state.backfillProgress = `${done}/${total}`;
+      renderStatusChip();
+      // if we're currently viewing similar-mode, re-render so new matches appear
+      if (state.similarTo) renderGrid();
+    }
+    state.backfillProgress = '';
+    backfillRunning = false;
+    renderStatusChip();
+  }
+
+  // ============================================================
+  // url extraction + image fetch (for browser-tab drags)
+  // ============================================================
+  // Pulls image URLs out of a DataTransfer. Preference order: <img src>
+  // from text/html (most reliable when dragging an actual image element),
+  // then text/uri-list, then text/plain. Accepts http(s) and data: URLs.
+  function extractImageUrls(dataTransfer) {
+    const out = [];
+    const seen = new Set();
+    const add = (raw) => {
+      let u = String(raw || '').trim();
+      if (!u) return;
+      if (u.startsWith('//')) u = 'https:' + u;
+      if (!/^(https?:\/\/|data:image\/)/i.test(u)) return;
+      if (seen.has(u)) return;
+      seen.add(u);
+      out.push(u);
+    };
+    const html = dataTransfer.getData('text/html');
+    if (html) {
+      try {
+        const doc = new DOMParser().parseFromString(html, 'text/html');
+        doc.querySelectorAll('img').forEach(img => add(img.getAttribute('src')));
+      } catch (e) { /* ignore parse errors */ }
+    }
+    const uriList = dataTransfer.getData('text/uri-list');
+    if (uriList) {
+      for (const line of uriList.split(/\r?\n/)) {
+        const t = line.trim();
+        if (t && !t.startsWith('#')) add(t);
+      }
+    }
+    const txt = dataTransfer.getData('text/plain');
+    if (txt) add(txt);
+    return out;
+  }
+
+  // The "source URL" is the page/asset URL the image was dragged from.
+  // Preference: an <a href> wrapping the image (the actual page link) →
+  // first text/uri-list entry → first http URL in text/plain.
+  // Returns null if nothing usable is in the DataTransfer.
+  function extractSourceUrl(dataTransfer) {
+    const html = dataTransfer.getData('text/html');
+    if (html) {
+      try {
+        const doc = new DOMParser().parseFromString(html, 'text/html');
+        const a = doc.querySelector('a[href]');
+        if (a) {
+          let href = String(a.getAttribute('href') || '').trim();
+          if (href.startsWith('//')) href = 'https:' + href;
+          if (/^https?:\/\//i.test(href)) return href;
+        }
+      } catch (e) { /* fall through */ }
+    }
+    const uriList = dataTransfer.getData('text/uri-list');
+    if (uriList) {
+      for (const line of uriList.split(/\r?\n/)) {
+        const t = line.trim();
+        if (t && !t.startsWith('#') && /^https?:\/\//i.test(t)) return t;
+      }
+    }
+    const txt = dataTransfer.getData('text/plain');
+    if (txt && /^https?:\/\//i.test(txt.trim())) return txt.trim();
+    return null;
+  }
+
+  // Try to download an image URL as a Blob. Direct fetch first (works for
+  // CORS-enabled hosts and data: URLs). On CORS/network failure, fall back
+  // to images.weserv.nl — a free image proxy that adds permissive CORS
+  // headers. Returns null if every attempt fails or the response isn't an image.
+  async function tryFetchImageAsBlob(url) {
+    try {
+      const res = await fetch(url, { mode: 'cors', credentials: 'omit' });
+      if (res.ok) {
+        const blob = await res.blob();
+        if (blob.type.startsWith('image/')) return blob;
+      }
+    } catch (e) { /* fall through to proxy */ }
+    if (/^data:/i.test(url)) return null;
+    try {
+      const stripped = url.replace(/^https?:\/\//i, '');
+      const proxied = `https://images.weserv.nl/?url=${encodeURIComponent(stripped)}`;
+      const res = await fetch(proxied);
+      if (res.ok) {
+        const blob = await res.blob();
+        if (blob.type.startsWith('image/')) return blob;
+      }
+    } catch (e) { /* give up */ }
+    return null;
+  }
+
+  // ============================================================
+  // color extraction (quantized histogram)
+  // ============================================================
+  async function extractDominantColors(blob) {
+    const img = await blobToImage(blob);
+    const W = 64, H = 64;
+    const canvas = document.createElement('canvas');
+    canvas.width = W; canvas.height = H;
+    const ctx = canvas.getContext('2d');
+    ctx.drawImage(img, 0, 0, W, H);
+    const data = ctx.getImageData(0, 0, W, H).data;
+    const buckets = new Map();
+    for (let i = 0; i < data.length; i += 4) {
+      const a = data[i + 3];
+      if (a < 64) continue;
+      // quantize each channel to 3 bits (8 levels)
+      const r = data[i] >> 5;
+      const g = data[i + 1] >> 5;
+      const b = data[i + 2] >> 5;
+      const key = (r << 6) | (g << 3) | b;
+      buckets.set(key, (buckets.get(key) || 0) + 1);
+    }
+    const sorted = [...buckets.entries()].sort((a, b) => b[1] - a[1]).slice(0, 5);
+    return sorted.map(([k]) => {
+      const r = (((k >> 6) & 7) << 5) | 16;
+      const g = (((k >> 3) & 7) << 5) | 16;
+      const b = ((k & 7) << 5) | 16;
+      return rgbToHex(r, g, b);
+    });
+  }
+
+  function rgbToHex(r, g, b) {
+    return '#' + [r, g, b].map(x => x.toString(16).padStart(2, '0')).join('');
+  }
+
+  function hexToRgb(hex) {
+    const m = hex.replace('#', '').match(/.{2}/g);
+    return m ? m.map(x => parseInt(x, 16)) : [0, 0, 0];
+  }
+
+  // simple "color similarity" for filtering — uses quantized bucket equality
+  function colorMatches(swatch, ref) {
+    if (!ref.colors || !ref.colors.length) return false;
+    const [sr, sg, sb] = hexToRgb(swatch);
+    const sk = ((sr >> 5) << 6) | ((sg >> 5) << 3) | (sb >> 5);
+    for (const c of ref.colors) {
+      const [r, g, b] = hexToRgb(c);
+      const k = ((r >> 5) << 6) | ((g >> 5) << 3) | (b >> 5);
+      // allow neighbors in bucket grid
+      if (Math.abs(k - sk) <= 9) return true;
+    }
+    return false;
+  }
+
+  function blobToImage(blob) {
+    return new Promise((res, rej) => {
+      const img = new Image();
+      const url = URL.createObjectURL(blob);
+      img.onload = () => { URL.revokeObjectURL(url); res(img); };
+      img.onerror = (e) => { URL.revokeObjectURL(url); rej(e); };
+      img.src = url;
+    });
+  }
+
+  // ============================================================
+  // AI auto-tag (BYOK)
+  // ============================================================
+  async function aiAutoTag(blob) {
+    const b64 = await blobToBase64(blob);
+    const mime = blob.type || 'image/png';
+    const body = {
+      model: 'gpt-4o-mini',
+      messages: [{
+        role: 'user',
+        content: [
+          { type: 'text', text: 'Return 3 to 5 lowercase single-word tags describing this design reference (style, mood, subject, medium). Reply as JSON: {"tags":["a","b","c"]}.' },
+          { type: 'image_url', image_url: { url: `data:${mime};base64,${b64}` } }
+        ]
+      }],
+      response_format: { type: 'json_object' },
+      max_tokens: 100
+    };
+    const res = await fetch('https://api.openai.com/v1/chat/completions', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${state.apiKey}`
+      },
+      body: JSON.stringify(body)
+    });
+    if (!res.ok) throw new Error(`OpenAI ${res.status}`);
+    const json = await res.json();
+    const content = json.choices?.[0]?.message?.content || '{}';
+    const parsed = JSON.parse(content);
+    return Array.isArray(parsed.tags) ? parsed.tags.slice(0, 5) : [];
+  }
+
+  function blobToBase64(blob) {
+    return new Promise((res, rej) => {
+      const r = new FileReader();
+      r.onload = () => res(String(r.result).split(',')[1]);
+      r.onerror = rej;
+      r.readAsDataURL(blob);
+    });
+  }
+
+  // ============================================================
+  // rendering
+  // ============================================================
+  function visibleRefs() {
+    // Text-query mode (CLIP text→image): rank by cosine similarity to the
+    // embedded text query. Refs without an embedding go to the bottom.
+    if (state.textQueryEmbedding) {
+      const query = state.textQueryEmbedding;
+      state.similarScores.clear();
+      const scored = state.refs.map(r => {
+        const e = state.embeddings.get(r.id);
+        const sim = e ? cosineSimilarity(query, e) : -1;
+        state.similarScores.set(r.id, sim);
+        return { ref: r, sim };
+      });
+      scored.sort((a, b) => b.sim - a.sim);
+      return scored.map(x => x.ref);
+    }
+    // Similar mode overrides all other filters: rank every ref by cosine
+    // similarity to the query embedding and return them in descending order.
+    // Refs we don't yet have an embedding for go to the bottom.
+    if (state.similarTo) {
+      const query = state.embeddings.get(state.similarTo);
+      if (!query) return state.refs;
+      state.similarScores.clear();
+      const scored = state.refs.map(r => {
+        const e = state.embeddings.get(r.id);
+        const sim = r.id === state.similarTo ? 1 : (e ? cosineSimilarity(query, e) : -1);
+        state.similarScores.set(r.id, sim);
+        return { ref: r, sim };
+      });
+      scored.sort((a, b) => b.sim - a.sim);
+      return scored.map(x => x.ref);
+    }
+    const q = state.searchQuery.trim().toLowerCase();
+    const colors = state.selectedColors;
+    return state.refs.filter(r => {
+      if (state.selectedCollection === 'untagged' && (r.tags && r.tags.length)) return false;
+      if (state.selectedCollection !== 'all' && state.selectedCollection !== 'untagged'
+          && r.collectionId !== state.selectedCollection) return false;
+      if (q && !(r.tags || []).some(t => t.toLowerCase().includes(q))) return false;
+      if (colors.size) {
+        let hit = false;
+        for (const c of colors) { if (colorMatches(c, r)) { hit = true; break; } }
+        if (!hit) return false;
+      }
+      return true;
+    });
+  }
+
+  function render() {
+    renderStatusChip();
+    renderSidebar();
+    renderColorbar();
+    // Toggle main-area panels based on viewMode
+    const gridWrap = document.getElementById('grid-wrap');
+    const feedWrap = document.getElementById('feed-wrap');
+    if (state.viewMode === 'feed') {
+      if (gridWrap) gridWrap.style.display = 'none';
+      if (feedWrap) feedWrap.style.display = 'block';
+      renderFeed();
+    } else {
+      if (gridWrap) gridWrap.style.display = '';
+      if (feedWrap) feedWrap.style.display = 'none';
+      renderGrid();
+    }
+    renderActionBar();
+    if (state.openRefId) {
+      const ref = state.refs.find(r => r.id === state.openRefId);
+      if (ref) renderDetail(ref);
+      else closeDetail();
+    }
+  }
+
+  // ============================================================
+  // team feed (chronological activity log)
+  // ============================================================
+  // Builds a sorted list of events by aggregating add / react / comment
+  // entries from every reference's pluginData. No separate event log to keep
+  // in sync — the source of truth is just the refs themselves.
+  function buildFeedEvents() {
+    const events = [];
+    for (const r of state.refs) {
+      if (r.addedAt) {
+        events.push({
+          type: 'add', refId: r.id, at: r.addedAt,
+          userName: (r.addedBy && r.addedBy.name) || 'Someone',
+          userId: (r.addedBy && r.addedBy.id) || ''
+        });
+      }
+      const rx = r.reactions || {};
+      for (const emoji of Object.keys(rx)) {
+        for (const e of (rx[emoji] || [])) {
+          if (!e || !e.at) continue;
+          events.push({
+            type: 'react', refId: r.id, at: e.at, emoji,
+            userName: e.userName || 'Someone',
+            userId: e.userId || ''
+          });
+        }
+      }
+      for (const c of (r.comments || [])) {
+        if (!c || !c.at) continue;
+        events.push({
+          type: 'comment', refId: r.id, at: c.at, text: c.text || '',
+          userName: c.userName || 'Someone',
+          userId: c.userId || ''
+        });
+      }
+    }
+    events.sort((a, b) => b.at - a.at);
+    return events;
+  }
+
+  function renderFeed() {
+    const wrap = document.getElementById('feed-wrap');
+    if (!wrap) return;
+    const events = buildFeedEvents();
+    if (!events.length) {
+      wrap.innerHTML = `<div class="feed-empty">Nothing has happened yet.<br>Add or react to references and they'll show up here for the whole team.</div>`;
+      return;
+    }
+    const refIndex = new Map();
+    for (const r of state.refs) refIndex.set(r.id, r);
+
+    wrap.innerHTML = events.map(function (e, i) {
+      const r = refIndex.get(e.refId);
+      const url = r ? state.blobUrls.get(r.id) : null;
+      const thumb = url
+        ? `<div class="thumb" style="background-image:url(${url})"></div>`
+        : `<div class="thumb"></div>`;
+      let copy;
+      if (e.type === 'add') {
+        copy = `<span class="name">${escapeHtml(e.userName)}</span> <span class="verb">added a reference</span>`;
+      } else if (e.type === 'react') {
+        copy = `<span class="name">${escapeHtml(e.userName)}</span> <span class="verb">reacted</span> ${escapeHtml(e.emoji)}`;
+      } else if (e.type === 'comment') {
+        copy = `<span class="name">${escapeHtml(e.userName)}</span> <span class="verb">commented:</span> <span class="quote">${escapeHtml(e.text.slice(0, 100))}${e.text.length > 100 ? '…' : ''}</span>`;
+      } else {
+        copy = '';
+      }
+      return `<div class="feed-item" data-ref="${escapeAttr(e.refId)}" data-i="${i}">
+        ${thumb}
+        <div class="copy">${copy}</div>
+        <div class="when">${escapeHtml(timeAgo(e.at))}</div>
+      </div>`;
+    }).join('');
+
+    wrap.querySelectorAll('.feed-item').forEach(function (item) {
+      item.onclick = () => {
+        const refId = item.dataset.ref;
+        const r = refIndex.get(refId);
+        if (r) openDetail(r);
+      };
+    });
+  }
+
+  // ============================================================
+  // multi-select + arrange
+  // ============================================================
+  function toggleSelection(refId) {
+    if (state.selectedRefs.has(refId)) state.selectedRefs.delete(refId);
+    else state.selectedRefs.add(refId);
+    render();
+  }
+
+  function clearSelection() {
+    state.selectedRefs.clear();
+    closeArrangeMenu();
+    render();
+  }
+
+  function renderActionBar() {
+    const bar = document.getElementById('action-bar');
+    if (!bar) return;
+    const n = state.selectedRefs.size;
+    if (n > 0) {
+      bar.style.display = 'flex';
+      const label = document.getElementById('action-count');
+      if (label) label.textContent = n === 1 ? '1 selected' : (n + ' selected');
+    } else {
+      bar.style.display = 'none';
+      closeArrangeMenu();
+    }
+  }
+
+  function closeArrangeMenu() {
+    const menu = document.getElementById('arrange-menu');
+    if (menu) menu.classList.remove('open');
+  }
+
+  // ----- Reaction picker (small floating emoji palette) -----
+  let _rxPickerEl = null;
+  function closeReactionPicker() {
+    if (_rxPickerEl && _rxPickerEl.parentNode) _rxPickerEl.parentNode.removeChild(_rxPickerEl);
+    _rxPickerEl = null;
+  }
+  function openReactionPicker(x, y, refId) {
+    closeReactionPicker();
+    const opts = ['👍', '🔥', '🤔', '❤️', '👀', '💡'];
+    const picker = document.createElement('div');
+    picker.className = 'rx-picker';
+    picker.innerHTML = opts.map(function (em) {
+      return `<button data-em="${em}">${em}</button>`;
+    }).join('');
+    document.body.appendChild(picker);
+    // position above the click; clamp to viewport
+    const rect = picker.getBoundingClientRect();
+    const left = Math.max(6, Math.min(window.innerWidth - rect.width - 6, x - rect.width / 2));
+    const top = Math.max(6, y - rect.height - 8);
+    picker.style.left = left + 'px';
+    picker.style.top = top + 'px';
+    picker.querySelectorAll('button').forEach(function (b) {
+      b.onclick = (e) => {
+        e.stopPropagation();
+        send({ type: 'toggle-reaction', id: refId, emoji: b.dataset.em });
+        closeReactionPicker();
+      };
+    });
+    _rxPickerEl = picker;
+    // close on next outside click
+    setTimeout(function () {
+      const onDocClick = (e) => {
+        if (_rxPickerEl && !_rxPickerEl.contains(e.target)) {
+          closeReactionPicker();
+          document.removeEventListener('click', onDocClick, true);
+        }
+      };
+      document.addEventListener('click', onDocClick, true);
+    }, 0);
+  }
+
+  // wire the arrange + cancel buttons once
+  (function wireArrangeUI() {
+    const arrangeBtn = document.getElementById('arrange-btn');
+    const cancelBtn = document.getElementById('cancel-btn');
+    const menu = document.getElementById('arrange-menu');
+    if (!arrangeBtn || !cancelBtn || !menu) return;
+
+    arrangeBtn.onclick = (e) => {
+      e.stopPropagation();
+      menu.classList.toggle('open');
+    };
+    cancelBtn.onclick = (e) => {
+      e.stopPropagation();
+      clearSelection();
+    };
+    menu.querySelectorAll('button[data-layout]').forEach((btn) => {
+      btn.onclick = (e) => {
+        e.stopPropagation();
+        const layout = btn.dataset.layout;
+        // Keep selection order stable: respect the current sort of state.refs.
+        const items = state.refs
+          .filter(r => state.selectedRefs.has(r.id))
+          .map(r => ({
+            imageHash: r.imageHash,
+            width: r.width,
+            height: r.height,
+            name: r.name
+          }));
+        if (!items.length) { closeArrangeMenu(); return; }
+        send({ type: 'arrange-references', layout, refs: items });
+        clearSelection();
+      };
+    });
+    // close menu when clicking elsewhere
+    document.addEventListener('click', (e) => {
+      if (!menu.classList.contains('open')) return;
+      if (menu.contains(e.target) || e.target === arrangeBtn) return;
+      closeArrangeMenu();
+    });
+  })();
+
+  // Aggregate count, cover thumbnail, and dominant-color palette for any
+  // subset of references (used per collection plus the synthetic "All" /
+  // "Untagged" rows). The cover is the most recent reference with a loaded
+  // thumbnail; palette is the top 4 quantized colors across the subset.
+  function collectionStats(predicate) {
+    const matching = state.refs.filter(predicate);
+    if (!matching.length) return { count: 0, coverUrl: null, palette: [] };
+    let coverUrl = null;
+    for (const r of matching) {
+      const u = state.blobUrls.get(r.id);
+      if (u) { coverUrl = u; break; }
+    }
+    const buckets = new Map();
+    for (const r of matching) {
+      for (const c of (r.colors || [])) {
+        const [rr, gg, bb] = hexToRgb(c);
+        const key = `${rr >> 5},${gg >> 5},${bb >> 5}`;
+        const entry = buckets.get(key) || { hex: c, n: 0 };
+        entry.n++;
+        buckets.set(key, entry);
+      }
+    }
+    const palette = [...buckets.values()].sort((a, b) => b.n - a.n).slice(0, 4).map(x => x.hex);
+    return { count: matching.length, coverUrl, palette };
+  }
+
+  function renderSidebar() {
+    const el = document.getElementById('sidebar');
+    const allStats = collectionStats(() => true);
+    const untaggedStats = collectionStats(r => !r.tags || !r.tags.length);
+    const collStatsById = new Map();
+    for (const c of state.collections) {
+      collStatsById.set(c.id, collectionStats(r => r.collectionId === c.id));
+    }
+    const sel = state.selectedCollection;
+    const row = (key, name, stats) => {
+      const active = sel === key ? 'active' : '';
+      const cover = stats.coverUrl
+        ? `<div class="cover" style="background-image:url(${stats.coverUrl})"></div>`
+        : `<div class="cover empty"></div>`;
+      const palette = stats.palette.length
+        ? `<div class="palette">${stats.palette.map(c => `<span class="dot" style="background:${c}"></span>`).join('')}</div>`
+        : '';
+      return `<div class="side-item ${active}" data-coll="${escapeAttr(key)}" title="${escapeAttr(name)}">
+        ${cover}
+        <div class="meta">
+          <div class="name-row"><span class="name">${escapeHtml(name)}</span><span class="count">${stats.count}</span></div>
+          ${palette}
+        </div>
+      </div>`;
+    };
+    let html = '';
+    // Activity (team feed) — rendered as a slim nav row, not a cover-style entry.
+    const feedActive = state.viewMode === 'feed';
+    html += `<div class="side-nav-item side-item ${feedActive ? 'active' : ''}" data-coll="__feed__" title="Team activity feed">
+      <span class="icon">📰</span><span>Activity</span>
+    </div>`;
+    html += row('all', 'All', allStats);
+    html += row('untagged', 'Untagged', untaggedStats);
+    html += `<div class="side-section">Collections</div>`;
+    for (const c of state.collections) {
+      html += row(c.id, c.name, collStatsById.get(c.id));
+    }
+    if (state.newCollectionMode) {
+      html += `<div class="side-add-input"><input id="new-coll-input" placeholder="Name + Enter" /></div>`;
+    } else {
+      html += `<div class="side-add" id="add-coll">＋ New collection</div>`;
+    }
+    el.innerHTML = html;
+    el.querySelectorAll('.side-item').forEach(node => {
+      node.onclick = () => {
+        const key = node.dataset.coll;
+        if (key === '__feed__') {
+          state.viewMode = 'feed';
+        } else {
+          state.viewMode = 'grid';
+          state.selectedCollection = key;
+        }
+        // selecting a collection clears similar mode so filters apply naturally
+        if (state.similarTo) state.similarTo = null;
+        render();
+      };
+    });
+    if (state.newCollectionMode) {
+      const inp = document.getElementById('new-coll-input');
+      if (inp) {
+        inp.focus();
+        inp.onkeydown = (e) => {
+          if (e.key === 'Enter') {
+            const name = inp.value.trim();
+            if (name) send({ type: 'create-collection', name });
+            state.newCollectionMode = false;
+            render();
+          } else if (e.key === 'Escape') {
+            state.newCollectionMode = false;
+            render();
+          }
+        };
+        // small delay on blur so an Enter that committed first still wins
+        inp.onblur = () => {
+          setTimeout(() => {
+            if (state.newCollectionMode) {
+              state.newCollectionMode = false;
+              render();
+            }
+          }, 120);
+        };
+      }
+    } else {
+      const btn = document.getElementById('add-coll');
+      if (btn) btn.onclick = () => {
+        state.newCollectionMode = true;
+        render();
+      };
+    }
+  }
+
+  function renderColorbar() {
+    const el = document.getElementById('colorbar');
+    // Build palette from all refs' top colors
+    const counts = new Map();
+    for (const r of state.refs) {
+      for (const c of (r.colors || [])) {
+        // quantize to dedupe near-identical
+        const [rr, gg, bb] = hexToRgb(c);
+        const key = `${rr >> 5},${gg >> 5},${bb >> 5}`;
+        if (!counts.has(key)) counts.set(key, { hex: c, n: 0 });
+        counts.get(key).n++;
+      }
+    }
+    const palette = [...counts.values()].sort((a, b) => b.n - a.n).slice(0, 20).map(x => x.hex);
+    let html = '';
+    if (state.selectedColors.size) {
+      html += `<div class="swatch clear" title="Clear color filters">✕</div>`;
+    }
+    for (const c of palette) {
+      const active = state.selectedColors.has(c) ? 'active' : '';
+      html += `<div class="swatch ${active}" style="background:${c}" data-color="${c}" title="${c}"></div>`;
+    }
+    el.innerHTML = html;
+    el.querySelectorAll('.swatch[data-color]').forEach(node => {
+      node.onclick = () => {
+        const c = node.dataset.color;
+        if (state.selectedColors.has(c)) state.selectedColors.delete(c);
+        else state.selectedColors.add(c);
+        render();
+      };
+    });
+    const clr = el.querySelector('.swatch.clear');
+    if (clr) clr.onclick = () => { state.selectedColors.clear(); render(); };
+  }
+
+  function renderGrid() {
+    renderSimilarBanner();
+    const refs = visibleRefs();
+    const grid = document.getElementById('grid');
+    const empty = document.getElementById('empty');
+    grid.innerHTML = '';
+    if (!refs.length) {
+      empty.style.display = state.refs.length === 0 ? 'flex' : 'none';
+      if (state.refs.length > 0) {
+        empty.style.display = 'flex';
+        empty.querySelector('.hint').textContent = 'No references match those filters.';
+        empty.querySelector('.big').textContent = '🔍';
+      }
+      return;
+    }
+    empty.style.display = 'none';
+    const similarMode = !!state.similarTo;
+    for (const r of refs) {
+      const url = state.blobUrls.get(r.id);
+      const card = document.createElement('div');
+      const isSelected = state.selectedRefs.has(r.id);
+      card.className = 'card' + (isSelected ? ' selected' : '');
+      let simBadge = '';
+      if (similarMode && r.id !== state.similarTo) {
+        const sim = state.similarScores.get(r.id);
+        if (typeof sim === 'number' && sim > -1) {
+          simBadge = `<div class="sim">${Math.round(sim * 100)}%</div>`;
+        }
+      }
+      const hasEmb = state.embeddings.has(r.id);
+      const simBtnAttrs = hasEmb && state.modelStatus === 'ready'
+        ? 'data-act="similar" title="Find visually similar"'
+        : 'data-act="similar" title="Visual search loading…" disabled style="opacity:0.4;cursor:default"';
+      // author chip + reactions strip
+      let authorLine = r.addedBy && (r.addedBy.name || r.addedBy.id)
+        ? `<span class="who">${escapeHtml(r.addedBy.name || 'Someone')}</span> · ${escapeHtml(timeAgo(r.addedAt))}`
+        : `<span class="who" style="opacity:0.6">unknown</span>`;
+      if (r.sourceUrl) {
+        const host = hostnameOf(r.sourceUrl);
+        if (host) {
+          authorLine += ` · <span class="src" data-src="${escapeAttr(r.sourceUrl)}" title="${escapeAttr(r.sourceUrl)}">↗ ${escapeHtml(host)}</span>`;
+        }
+      }
+      const REACTION_EMOJIS = ['👍', '🔥', '🤔'];
+      const rxChips = REACTION_EMOJIS.map(function (em) {
+        const n = reactionCount(r, em);
+        if (n === 0) return '';
+        const mine = userReacted(r, em) ? ' mine' : '';
+        return `<span class="rx${mine}" data-rx="${em}" title="${em} ${n}">${em} ${n}</span>`;
+      }).join('');
+      card.innerHTML = `
+        ${url ? `<img src="${url}" alt="" loading="lazy" />` : `<div style="height:120px;background:var(--bg-3)"></div>`}
+        ${simBadge}
+        <div class="check ${isSelected ? 'checked' : ''}" data-act="check" title="Select for arrange">${isSelected ? '✓' : ''}</div>
+        <div class="overlay">
+          <button ${simBtnAttrs}>🔍</button>
+          <button data-act="place" title="Place on canvas">↗</button>
+          <button data-act="edit" title="Edit tags">✎</button>
+          <button class="danger" data-act="delete" title="Delete">🗑</button>
+        </div>
+        <div class="meta-row">
+          <span class="author" title="${escapeAttr((r.addedBy && r.addedBy.name) || '')} ${escapeAttr(r.addedAt ? new Date(r.addedAt).toLocaleString() : '')}">${authorLine}</span>
+          <span class="reactions">
+            ${rxChips}
+            <span class="rx-add" data-act="add-rx" title="Add a reaction">+</span>
+          </span>
+        </div>
+      `;
+      card.querySelector('[data-act="check"]').onclick = (e) => {
+        e.stopPropagation();
+        toggleSelection(r.id);
+      };
+      // existing-reaction toggles
+      card.querySelectorAll('.rx[data-rx]').forEach(function (chip) {
+        chip.onclick = (e) => {
+          e.stopPropagation();
+          send({ type: 'toggle-reaction', id: r.id, emoji: chip.dataset.rx });
+        };
+      });
+      // source-url chip
+      const srcEl = card.querySelector('.src[data-src]');
+      if (srcEl) srcEl.onclick = (e) => {
+        e.stopPropagation();
+        openSourceUrl(srcEl.dataset.src);
+      };
+      // + adds a new reaction via small picker
+      const addRx = card.querySelector('[data-act="add-rx"]');
+      if (addRx) addRx.onclick = (e) => {
+        e.stopPropagation();
+        openReactionPicker(e.clientX, e.clientY, r.id);
+      };
+      const simBtn = card.querySelector('[data-act="similar"]');
+      if (simBtn) simBtn.onclick = (e) => {
+        e.stopPropagation();
+        if (simBtn.hasAttribute('disabled')) return;
+        findSimilar(r.id);
+      };
+      card.querySelector('[data-act="place"]').onclick = (e) => {
+        e.stopPropagation();
+        send({ type: 'place-on-canvas', id: r.id });
+      };
+      card.querySelector('[data-act="edit"]').onclick = (e) => {
+        e.stopPropagation();
+        openDetail(r);
+      };
+      card.querySelector('[data-act="delete"]').onclick = (e) => {
+        e.stopPropagation();
+        // confirm() is blocked in Figma's plugin iframe — delete immediately.
+        // Refs are cheap to re-add, and Figma still has its own undo (⌘Z).
+        state.selectedRefs.delete(r.id);
+        send({ type: 'delete-reference', id: r.id });
+      };
+      card.onclick = () => {
+        // While a multi-selection is active, click toggles selection
+        // instead of opening the drawer — feels right for "picking" mode.
+        if (state.selectedRefs.size > 0) toggleSelection(r.id);
+        else openDetail(r);
+      };
+      grid.appendChild(card);
+    }
+  }
+
+  // ============================================================
+  // similar-mode banner + chip rendering
+  // ============================================================
+  function renderSimilarBanner() {
+    const banner = document.getElementById('similar-banner');
+    // Text query has priority over similar-to-ref mode.
+    if (state.textQueryEmbedding) {
+      banner.style.display = 'flex';
+      banner.innerHTML = '';
+      const label = document.createElement('span');
+      label.textContent = 'Results for';
+      banner.appendChild(label);
+      const q = document.createElement('span');
+      q.style.fontWeight = '500';
+      q.style.color = 'var(--fg)';
+      q.textContent = '“' + state.textQuery + '”';
+      banner.appendChild(q);
+      const clearBtn = document.createElement('button');
+      clearBtn.className = 'clear';
+      clearBtn.textContent = 'Clear';
+      clearBtn.onclick = clearTextSearch;
+      banner.appendChild(clearBtn);
+      return;
+    }
+    if (!state.similarTo) {
+      banner.style.display = 'none';
+      banner.innerHTML = '';
+      return;
+    }
+    const ref = state.refs.find(r => r.id === state.similarTo);
+    const url = ref ? state.blobUrls.get(ref.id) : null;
+    banner.style.display = 'flex';
+    banner.innerHTML = '';
+    const label = document.createElement('span');
+    label.textContent = 'Similar to';
+    banner.appendChild(label);
+    if (url) {
+      const img = document.createElement('img');
+      img.src = url;
+      banner.appendChild(img);
+    }
+    const clearBtn = document.createElement('button');
+    clearBtn.className = 'clear';
+    clearBtn.textContent = 'Clear';
+    clearBtn.onclick = () => { state.similarTo = null; render(); };
+    banner.appendChild(clearBtn);
+  }
+
+  function renderStatusChip() {
+    const chip = document.getElementById('model-chip');
+    if (!chip) return;
+    if (state.modelStatus === 'loading') {
+      chip.style.display = 'flex';
+      chip.className = 'model-chip loading';
+      const pct = state.modelProgress > 0 ? ` ${state.modelProgress}%` : '';
+      chip.innerHTML = `<span class="dot"></span><span>Loading visual search${pct}…</span>`;
+    } else if (state.modelStatus === 'error') {
+      chip.style.display = 'flex';
+      chip.className = 'model-chip error';
+      chip.innerHTML = `<span class="dot"></span><span>Visual search unavailable${state.modelError ? ': ' + escapeHtml(state.modelError) : ''}</span>`;
+    } else if (state.backfillProgress) {
+      chip.style.display = 'flex';
+      chip.className = 'model-chip loading';
+      chip.innerHTML = `<span class="dot"></span><span>Indexing references ${state.backfillProgress}</span>`;
+    } else {
+      chip.style.display = 'none';
+      chip.innerHTML = '';
+    }
+  }
+
+  function findSimilar(refId) {
+    if (state.modelStatus !== 'ready') {
+      notify('Visual search model still loading…');
+      return;
+    }
+    if (!state.embeddings.has(refId)) {
+      notify('This image hasn\'t been indexed yet');
+      return;
+    }
+    state.similarTo = refId;
+    state.searchQuery = '';
+    state.selectedColors.clear();
+    state.selectedCollection = 'all';
+    const searchEl = document.getElementById('search');
+    if (searchEl) searchEl.value = '';
+    render();
+  }
+
+  // ============================================================
+  // detail drawer
+  // ============================================================
+  function openDetail(ref) {
+    state.openRefId = ref.id;
+    renderDetail(ref);
+    document.getElementById('detail-drawer').classList.add('open');
+  }
+  function closeDetail() {
+    state.openRefId = null;
+    document.getElementById('detail-drawer').classList.remove('open');
+  }
+  function renderDetail(ref) {
+    const url = state.blobUrls.get(ref.id);
+    const body = document.getElementById('detail-body');
+    const tagsHtml = (ref.tags || []).map((t, i) =>
+      `<span class="tag">${escapeHtml(t)}<span class="x" data-i="${i}">✕</span></span>`).join('');
+    const colorsHtml = (ref.colors || []).map(c =>
+      `<div class="swatch" style="background:${c}" title="${c}"></div>`).join('');
+    const collOptions = ['<option value="">— No collection —</option>']
+      .concat(state.collections.map(c =>
+        `<option value="${c.id}" ${ref.collectionId === c.id ? 'selected' : ''}>${escapeHtml(c.name)}</option>`))
+      .join('');
+    // Author chip + reactions strip at the top of the body
+    let authorChip = ref.addedBy && (ref.addedBy.name || ref.addedBy.id)
+      ? `<span class="who">${escapeHtml(ref.addedBy.name || 'Someone')}</span> · ${escapeHtml(timeAgo(ref.addedAt))}`
+      : '';
+    if (ref.sourceUrl) {
+      const host = hostnameOf(ref.sourceUrl);
+      const label = host || 'source';
+      authorChip += ` · <span class="src" data-src="${escapeAttr(ref.sourceUrl)}" title="${escapeAttr(ref.sourceUrl)}" style="cursor:pointer;color:var(--accent)">↗ ${escapeHtml(label)}</span>`;
+    }
+    const REACTION_EMOJIS_DETAIL = ['👍', '🔥', '🤔', '❤️', '👀', '💡'];
+    const detailRxHtml = REACTION_EMOJIS_DETAIL.map(function (em) {
+      const n = reactionCount(ref, em);
+      const mine = userReacted(ref, em) ? ' mine' : '';
+      return `<span class="rx${mine}" data-rx="${em}">${em}${n ? ' ' + n : ''}</span>`;
+    }).join('');
+    const commentsHtml = (ref.comments || []).slice().sort(function (a, b) {
+      return (a.at || 0) - (b.at || 0);
+    }).map(function (c) {
+      const isMine = (state.currentUser.id && c.userId === state.currentUser.id) ||
+                     (!state.currentUser.id && c.userName === state.currentUser.name);
+      const delBtn = isMine ? `<button class="del" data-cid="${escapeAttr(c.id)}" title="Delete">✕</button>` : '';
+      return `<div class="comment">
+        <div class="avatar">${escapeHtml(initialsOf(c.userName))}</div>
+        <div class="body">
+          <div class="who-line"><span class="name">${escapeHtml(c.userName || 'Someone')}</span><span>${escapeHtml(timeAgo(c.at))}</span>${delBtn}</div>
+          <div class="text">${escapeHtml(c.text)}</div>
+        </div>
+      </div>`;
+    }).join('');
+    body.innerHTML = `
+      <div class="preview">${url ? `<img src="${url}" />` : ''}</div>
+      ${authorChip ? `<div class="field" style="margin-bottom:8px;color:var(--fg-3);font-size:11px">${authorChip}</div>` : ''}
+      <div class="field">
+        <label>Reactions</label>
+        <div class="reactions" id="d-reactions" style="display:flex;gap:4px;flex-wrap:wrap">${detailRxHtml}</div>
+      </div>
+      <div class="field">
+        <label>Tags</label>
+        <div class="tags-row" id="d-tags">${tagsHtml}</div>
+        <input id="d-tag-input" placeholder="Add tag and press Enter" />
+      </div>
+      <div class="field">
+        <label>Collection</label>
+        <select id="d-collection">${collOptions}</select>
+      </div>
+      <div class="field">
+        <label>Colors</label>
+        <div class="colors-row">${colorsHtml || '<span style="color:var(--fg-3)">none</span>'}</div>
+      </div>
+      <div class="field">
+        <label>Comments</label>
+        <div class="comments" id="d-comments">${commentsHtml || '<div style="color:var(--fg-3);font-size:11px;padding:4px 0">No comments yet — start the thread.</div>'}</div>
+        <div class="comment-input-row">
+          <input id="d-comment-input" placeholder="Write a comment…" />
+          <button id="d-comment-send" type="button">Post</button>
+        </div>
+      </div>
+    `;
+    document.getElementById('detail-actions').innerHTML = `
+      <button class="btn primary" id="d-extract" title="Create color variables, spacing, and text styles in this Figma file">Extract → Tokens</button>
+      <button class="btn ghost" id="d-place">Place</button>
+      <button class="btn danger" id="d-delete">Delete</button>
+    `;
+    // wire up
+    body.querySelectorAll('#d-tags .x').forEach(node => {
+      node.onclick = () => {
+        const i = +node.dataset.i;
+        const next = (ref.tags || []).slice();
+        next.splice(i, 1);
+        send({ type: 'update-reference', id: ref.id, tags: next });
+      };
+    });
+    body.querySelector('#d-tag-input').onkeydown = (e) => {
+      if (e.key === 'Enter') {
+        const v = e.target.value.trim().toLowerCase();
+        if (!v) return;
+        const next = [...(ref.tags || []), v];
+        send({ type: 'update-reference', id: ref.id, tags: next });
+        e.target.value = '';
+      }
+    };
+    body.querySelector('#d-collection').onchange = (e) => {
+      send({ type: 'update-reference', id: ref.id, collectionId: e.target.value || null });
+    };
+    document.getElementById('d-place').onclick = () => {
+      send({ type: 'place-on-canvas', id: ref.id });
+    };
+    document.getElementById('d-extract').onclick = () => {
+      if (!ref.colors || !ref.colors.length) {
+        notify('No colors extracted yet for this reference');
+        return;
+      }
+      notify('Extracting design tokens…');
+      send({ type: 'extract-tokens', id: ref.id });
+    };
+    document.getElementById('d-delete').onclick = () => {
+      // confirm() is blocked in Figma's plugin iframe — delete immediately.
+      state.selectedRefs.delete(ref.id);
+      send({ type: 'delete-reference', id: ref.id });
+      closeDetail();
+    };
+    // source URL chip (in the author line at the top)
+    const detailSrc = body.querySelector('.src[data-src]');
+    if (detailSrc) detailSrc.onclick = (e) => {
+      e.stopPropagation();
+      openSourceUrl(detailSrc.dataset.src);
+    };
+    // preview tap → lightbox
+    const preview = body.querySelector('.preview');
+    if (preview) preview.onclick = (e) => {
+      // only trigger when the user actually clicks the image/zoom area
+      openLightbox(ref.id);
+    };
+    // reactions
+    body.querySelectorAll('#d-reactions .rx[data-rx]').forEach(function (chip) {
+      chip.onclick = () => {
+        send({ type: 'toggle-reaction', id: ref.id, emoji: chip.dataset.rx });
+      };
+    });
+    // comments — delete (only own) and post
+    body.querySelectorAll('#d-comments .comment .del').forEach(function (btn) {
+      btn.onclick = () => {
+        send({ type: 'delete-comment', id: ref.id, commentId: btn.dataset.cid });
+      };
+    });
+    const cInput = document.getElementById('d-comment-input');
+    const cSend = document.getElementById('d-comment-send');
+    const submitComment = () => {
+      const text = cInput.value.trim();
+      if (!text) return;
+      send({ type: 'add-comment', id: ref.id, text });
+      cInput.value = '';
+    };
+    if (cSend) cSend.onclick = submitComment;
+    if (cInput) cInput.onkeydown = (e) => {
+      if (e.key === 'Enter' && !e.shiftKey) {
+        e.preventDefault();
+        submitComment();
+      }
+    };
+  }
+
+  // ============================================================
+  // save current Figma selection
+  // ============================================================
+  document.getElementById('save-selection-btn').onclick = () => {
+    send({ type: 'save-selection' });
+  };
+
+  // ============================================================
+  // settings
+  // ============================================================
+  document.getElementById('settings-btn').onclick = () => {
+    document.getElementById('settings-drawer').classList.add('open');
+  };
+  function closeSettings() {
+    document.getElementById('settings-drawer').classList.remove('open');
+  }
+  function saveApiKey() {
+    const v = document.getElementById('api-key').value.trim();
+    state.apiKey = v;
+    send({ type: 'save-api-key', apiKey: v });
+    closeSettings();
+  }
+  function clearApiKey() {
+    document.getElementById('api-key').value = '';
+    state.apiKey = '';
+    send({ type: 'save-api-key', apiKey: '' });
+  }
+
+  // ============================================================
+  // lightbox: full-screen preview with keyboard + arrow navigation
+  // ============================================================
+  function openLightbox(refId) {
+    const list = visibleRefs();
+    const idx = list.findIndex(r => r.id === refId);
+    if (idx < 0) return;
+    state.lightboxIndex = idx;
+    renderLightbox();
+  }
+  function closeLightbox() {
+    state.lightboxIndex = -1;
+    const el = document.getElementById('lightbox');
+    if (el) el.classList.remove('open');
+  }
+  function lightboxStep(delta) {
+    if (state.lightboxIndex < 0) return;
+    const list = visibleRefs();
+    if (!list.length) { closeLightbox(); return; }
+    state.lightboxIndex = (state.lightboxIndex + delta + list.length) % list.length;
+    renderLightbox();
+  }
+  function renderLightbox() {
+    const el = document.getElementById('lightbox');
+    if (!el) return;
+    if (state.lightboxIndex < 0) { el.classList.remove('open'); return; }
+    const list = visibleRefs();
+    if (!list.length) { closeLightbox(); return; }
+    if (state.lightboxIndex >= list.length) state.lightboxIndex = list.length - 1;
+    const ref = list[state.lightboxIndex];
+    const url = state.blobUrls.get(ref.id);
+    const img = document.getElementById('lb-img');
+    if (img) img.src = url || '';
+    const counter = document.getElementById('lb-counter');
+    if (counter) counter.textContent = (state.lightboxIndex + 1) + ' / ' + list.length;
+    el.classList.add('open');
+  }
+  (function wireLightbox() {
+    const el = document.getElementById('lightbox');
+    if (!el) return;
+    document.getElementById('lb-close').onclick = (e) => { e.stopPropagation(); closeLightbox(); };
+    document.getElementById('lb-prev').onclick = (e) => { e.stopPropagation(); lightboxStep(-1); };
+    document.getElementById('lb-next').onclick = (e) => { e.stopPropagation(); lightboxStep(1); };
+    // Click on the backdrop (but not on the image or buttons) closes the lightbox
+    el.onclick = (e) => {
+      if (e.target === el) closeLightbox();
+    };
+    document.addEventListener('keydown', (e) => {
+      if (state.lightboxIndex < 0) return;
+      if (e.key === 'Escape') { closeLightbox(); }
+      else if (e.key === 'ArrowLeft') { e.preventDefault(); lightboxStep(-1); }
+      else if (e.key === 'ArrowRight') { e.preventDefault(); lightboxStep(1); }
+    });
+  })();
+
+  // ============================================================
+  // search — tag substring while typing, CLIP text→image on Enter
+  // ============================================================
+  const searchInput = document.getElementById('search');
+  searchInput.oninput = (e) => {
+    state.searchQuery = e.target.value;
+    // Editing the query invalidates any pending visual-search results so
+    // typing always falls back to tag filtering until Enter is pressed again.
+    if (state.textQuery) {
+      state.textQuery = '';
+      state.textQueryEmbedding = null;
+    }
+    if (state.viewMode === 'feed') return;
+    renderGrid();
+    renderSimilarBanner();
+  };
+  searchInput.onkeydown = async (e) => {
+    if (e.key !== 'Enter') return;
+    const q = e.target.value.trim();
+    if (q.length < 2) return;
+    const cf = window.__clipform;
+    if (!cf || cf.status !== 'ready' || typeof cf.embedText !== 'function') {
+      notify('Visual search still loading…');
+      return;
+    }
+    notify('Searching “' + q + '”…');
+    const emb = await embedTextQuery(q);
+    if (!emb) {
+      notify('Couldn’t embed that query');
+      return;
+    }
+    state.textQuery = q;
+    state.textQueryEmbedding = emb;
+    state.similarTo = null;     // visual-text mode supersedes similar-to-ref mode
+    state.viewMode = 'grid';
+    render();
+  };
+
+  function clearTextSearch() {
+    state.textQuery = '';
+    state.textQueryEmbedding = null;
+    searchInput.value = '';
+    state.searchQuery = '';
+    render();
+  }
+
+  // ============================================================
+  // helpers
+  // ============================================================
+  function escapeHtml(s) {
+    return String(s).replace(/[&<>"']/g, c =>
+      ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+  }
+  function escapeAttr(s) { return escapeHtml(s); }
+
+  // Pull a clean hostname from a URL for display (e.g. "example.com").
+  // Returns '' on parse failure so callers can decide what to render.
+  function hostnameOf(url) {
+    try {
+      const u = new URL(url);
+      return u.hostname.replace(/^www\./, '');
+    } catch (e) { return ''; }
+  }
+
+  // Open an external URL via window.open. Figma's plugin iframe allows this
+  // for user-initiated clicks. Sandboxed fallback notifies the user if blocked.
+  function openSourceUrl(url) {
+    if (!url) return;
+    try {
+      const w = window.open(url, '_blank', 'noopener,noreferrer');
+      if (!w) notify('Browser blocked the link — copy manually: ' + url);
+    } catch (e) {
+      notify('Could not open: ' + url);
+    }
+  }
+
+  // Compact relative-time formatter — never returns more precision than needed.
+  function timeAgo(ts) {
+    if (!ts) return '';
+    const diff = Math.max(0, Date.now() - ts);
+    const s = Math.floor(diff / 1000);
+    if (s < 60) return 'just now';
+    const m = Math.floor(s / 60);
+    if (m < 60) return m + 'm ago';
+    const h = Math.floor(m / 60);
+    if (h < 24) return h + 'h ago';
+    const d = Math.floor(h / 24);
+    if (d < 7) return d + 'd ago';
+    const w = Math.floor(d / 7);
+    if (w < 5) return w + 'w ago';
+    return new Date(ts).toLocaleDateString();
+  }
+
+  function initialsOf(name) {
+    if (!name) return '?';
+    const parts = String(name).trim().split(/\s+/);
+    if (parts.length === 1) return parts[0].charAt(0).toUpperCase();
+    return (parts[0].charAt(0) + parts[parts.length - 1].charAt(0)).toUpperCase();
+  }
+
+  // Has the current user reacted to this ref with this emoji?
+  function userReacted(ref, emoji) {
+    const list = ref && ref.reactions && ref.reactions[emoji];
+    if (!Array.isArray(list)) return false;
+    const me = state.currentUser || {};
+    const key = me.id || me.name;
+    return list.some(function (r) { return (r.userId || r.userName) === key; });
+  }
+
+  function reactionCount(ref, emoji) {
+    const list = ref && ref.reactions && ref.reactions[emoji];
+    return Array.isArray(list) ? list.length : 0;
+  }
+</script>
+</body>
+</html>

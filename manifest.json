@@ -1,0 +1,13 @@
+{
+  "name": "Clipform",
+  "id": "clipform",
+  "api": "1.0.0",
+  "main": "code.js",
+  "ui": "ui.html",
+  "editorType": ["figma", "figjam"],
+  "permissions": ["currentuser"],
+  "networkAccess": {
+    "allowedDomains": ["*"],
+    "reasoning": "Two opt-in uses, both triggered only by an explicit user action: (1) Fetching image bytes for references dragged from a browser tab — tries the source domain directly first, falls back to images.weserv.nl (a free image CORS proxy) when the source blocks cross-origin reads. (2) Optional BYOK call to api.openai.com for auto-tagging, only when the user supplies their own key in settings."
+  }
+}
