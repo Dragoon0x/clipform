@@ -1,0 +1,690 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Clipform — Your moodboard lives in Figma now</title>
+<meta name="description" content="A Figma-native moodboard plugin. Free, open, no login. Visual search via CLIP, seven arrange layouts, design-token extraction, team multiplayer." />
+<meta name="theme-color" content="#0a0a0b" />
+
+<meta property="og:title" content="Clipform — Your moodboard lives in Figma now" />
+<meta property="og:description" content="A Figma-native moodboard plugin. Free, open, no login. Visual search via CLIP, seven arrange layouts, design-token extraction." />
+<meta property="og:image" content="screenshots/hero.png" />
+<meta property="og:type" content="website" />
+<meta name="twitter:card" content="summary_large_image" />
+
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:ital,wght@0,200..800;1,200..800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet" />
+
+<style>
+  :root {
+    --bg: #0a0a0b;
+    --bg-elevated: #131316;
+    --bg-card: #18181c;
+    --border: rgba(255, 255, 255, 0.07);
+    --border-strong: rgba(255, 255, 255, 0.14);
+    --fg: #fafafa;
+    --fg-muted: #a4a4ac;
+    --fg-dim: #6b6b73;
+    --accent: #ff6b35;
+    --accent-soft: rgba(255, 107, 53, 0.13);
+    --blue: #18a0fb;
+    --gutter: clamp(1.25rem, 4vw, 3rem);
+    --max: 1200px;
+    --radius: 14px;
+  }
+
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  html { scroll-behavior: smooth; }
+  body {
+    background: var(--bg);
+    color: var(--fg);
+    font-family: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, system-ui, sans-serif;
+    font-size: 17px;
+    line-height: 1.55;
+    -webkit-font-smoothing: antialiased;
+    text-rendering: optimizeLegibility;
+    overflow-x: hidden;
+    background-image:
+      radial-gradient(ellipse 80% 50% at 50% -10%, rgba(255, 107, 53, 0.12), transparent 60%),
+      radial-gradient(ellipse 60% 40% at 80% 20%, rgba(24, 160, 251, 0.08), transparent 60%);
+    background-repeat: no-repeat;
+  }
+
+  a { color: inherit; text-decoration: none; }
+  img { max-width: 100%; display: block; }
+  code, pre { font-family: 'JetBrains Mono', ui-monospace, SFMono-Regular, Menlo, monospace; }
+
+  /* ====================================================================
+     Nav
+     ==================================================================== */
+  nav {
+    position: sticky; top: 0;
+    z-index: 50;
+    padding: 18px var(--gutter);
+    display: flex; align-items: center; justify-content: space-between;
+    backdrop-filter: blur(20px) saturate(140%);
+    -webkit-backdrop-filter: blur(20px) saturate(140%);
+    background: rgba(10, 10, 11, 0.6);
+    border-bottom: 1px solid transparent;
+    transition: border-color 200ms ease;
+  }
+  nav.scrolled { border-bottom-color: var(--border); }
+  .brand {
+    display: flex; align-items: center; gap: 10px;
+    font-weight: 600; font-size: 17px; letter-spacing: -0.01em;
+  }
+  .brand-mark {
+    width: 28px; height: 28px;
+    background: var(--fg);
+    color: var(--bg);
+    border-radius: 7px;
+    display: grid; place-items: center;
+    font-size: 13px; font-weight: 700;
+    font-family: 'JetBrains Mono', monospace;
+  }
+  .nav-links {
+    display: flex; align-items: center; gap: 28px;
+    font-size: 14px; color: var(--fg-muted);
+    font-weight: 500;
+  }
+  .nav-links a:hover { color: var(--fg); }
+  .nav-links .pill {
+    background: var(--fg); color: var(--bg);
+    padding: 7px 14px; border-radius: 999px;
+    font-weight: 600; font-size: 13px;
+    transition: transform 120ms ease;
+  }
+  .nav-links .pill:hover { transform: translateY(-1px); color: var(--bg); }
+  @media (max-width: 640px) { .nav-links a:not(.pill) { display: none; } }
+
+  /* ====================================================================
+     Hero
+     ==================================================================== */
+  .hero {
+    padding: clamp(60px, 12vw, 140px) var(--gutter) 0;
+    text-align: center;
+    max-width: var(--max);
+    margin: 0 auto;
+  }
+  .eyebrow {
+    display: inline-flex; align-items: center; gap: 8px;
+    padding: 6px 12px 6px 8px;
+    background: var(--bg-elevated);
+    border: 1px solid var(--border);
+    border-radius: 999px;
+    font-size: 13px; color: var(--fg-muted); font-weight: 500;
+    margin-bottom: 28px;
+  }
+  .eyebrow .dot {
+    width: 6px; height: 6px; border-radius: 50%;
+    background: #4ade80;
+    box-shadow: 0 0 8px #4ade80;
+  }
+  h1 {
+    font-size: clamp(40px, 7vw, 84px);
+    line-height: 1.02;
+    font-weight: 700;
+    letter-spacing: -0.035em;
+    margin-bottom: 24px;
+    max-width: 920px;
+    margin-left: auto; margin-right: auto;
+  }
+  h1 .accent { color: var(--accent); font-style: italic; font-weight: 600; }
+  .hero p.sub {
+    font-size: clamp(17px, 1.6vw, 21px);
+    line-height: 1.5;
+    color: var(--fg-muted);
+    max-width: 620px;
+    margin: 0 auto 40px;
+  }
+  .cta-row {
+    display: flex; gap: 12px;
+    justify-content: center; align-items: center;
+    flex-wrap: wrap;
+    margin-bottom: 64px;
+  }
+  .btn {
+    display: inline-flex; align-items: center; gap: 8px;
+    padding: 14px 22px;
+    border-radius: 12px;
+    font-size: 15px; font-weight: 600;
+    transition: all 150ms ease;
+    border: 1px solid transparent;
+    line-height: 1;
+  }
+  .btn.primary {
+    background: var(--fg); color: var(--bg);
+  }
+  .btn.primary:hover { transform: translateY(-1px); box-shadow: 0 8px 24px rgba(255,255,255,0.12); }
+  .btn.ghost {
+    background: var(--bg-elevated);
+    border-color: var(--border);
+    color: var(--fg);
+  }
+  .btn.ghost:hover { border-color: var(--border-strong); background: var(--bg-card); }
+  .btn .arrow { transition: transform 150ms ease; }
+  .btn:hover .arrow { transform: translateX(2px); }
+
+  /* hero screenshot showcase */
+  .hero-shot {
+    max-width: 1080px; margin: 0 auto;
+    padding: 0 var(--gutter);
+    position: relative;
+  }
+  .hero-shot::before {
+    content: ''; position: absolute;
+    inset: -10% -10% 10% -10%;
+    background: radial-gradient(ellipse at 50% 50%, rgba(255,107,53,0.18), transparent 70%);
+    z-index: -1;
+    pointer-events: none;
+  }
+  .hero-shot img {
+    border-radius: 16px;
+    border: 1px solid var(--border-strong);
+    box-shadow:
+      0 4px 12px rgba(0,0,0,0.4),
+      0 24px 80px rgba(0,0,0,0.6),
+      0 0 0 1px rgba(255,255,255,0.04) inset;
+  }
+
+  /* ====================================================================
+     Pillars (sub-hero quick chips)
+     ==================================================================== */
+  .pillars {
+    display: flex; flex-wrap: wrap;
+    justify-content: center; gap: 8px;
+    padding: 80px var(--gutter) 40px;
+    max-width: var(--max);
+    margin: 0 auto;
+  }
+  .pillars .chip {
+    padding: 8px 14px;
+    background: var(--bg-elevated);
+    border: 1px solid var(--border);
+    border-radius: 999px;
+    font-size: 13px; color: var(--fg-muted);
+    font-weight: 500;
+  }
+  .pillars .chip strong { color: var(--fg); font-weight: 600; }
+
+  /* ====================================================================
+     Section base
+     ==================================================================== */
+  section.block {
+    padding: clamp(60px, 10vw, 120px) var(--gutter);
+    max-width: var(--max);
+    margin: 0 auto;
+  }
+  .section-eyebrow {
+    font-size: 13px; font-weight: 600; letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--accent);
+    margin-bottom: 14px;
+  }
+  h2 {
+    font-size: clamp(32px, 5vw, 56px);
+    line-height: 1.05;
+    font-weight: 700;
+    letter-spacing: -0.03em;
+    margin-bottom: 18px;
+    max-width: 760px;
+  }
+  .section-sub {
+    color: var(--fg-muted);
+    font-size: clamp(16px, 1.4vw, 18px);
+    max-width: 620px;
+    margin-bottom: 56px;
+  }
+
+  /* ====================================================================
+     Feature blocks (alternating layout)
+     ==================================================================== */
+  .feature {
+    display: grid;
+    grid-template-columns: 1fr 1.4fr;
+    gap: clamp(32px, 6vw, 80px);
+    align-items: center;
+    padding: clamp(40px, 8vw, 96px) 0;
+    border-top: 1px solid var(--border);
+  }
+  .feature.reverse { grid-template-columns: 1.4fr 1fr; }
+  .feature.reverse .feature-text { order: 2; }
+  .feature.reverse .feature-image { order: 1; }
+  @media (max-width: 880px) {
+    .feature, .feature.reverse { grid-template-columns: 1fr; }
+    .feature.reverse .feature-text { order: 1; }
+    .feature.reverse .feature-image { order: 2; }
+  }
+  .feature-num {
+    display: inline-block;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 13px;
+    color: var(--accent);
+    margin-bottom: 16px;
+    letter-spacing: 0.04em;
+  }
+  .feature-text h3 {
+    font-size: clamp(26px, 3.4vw, 36px);
+    line-height: 1.1;
+    font-weight: 700;
+    letter-spacing: -0.025em;
+    margin-bottom: 18px;
+  }
+  .feature-text p {
+    color: var(--fg-muted);
+    font-size: 17px;
+    line-height: 1.6;
+    margin-bottom: 24px;
+  }
+  .feature-text .meta {
+    display: flex; flex-wrap: wrap; gap: 6px;
+  }
+  .feature-text .meta span {
+    font-size: 12px;
+    padding: 4px 10px;
+    border: 1px solid var(--border);
+    border-radius: 999px;
+    color: var(--fg-muted);
+    background: var(--bg-elevated);
+    font-family: 'JetBrains Mono', monospace;
+  }
+  .feature-image {
+    background: var(--bg-elevated);
+    border-radius: var(--radius);
+    border: 1px solid var(--border);
+    overflow: hidden;
+    box-shadow: 0 16px 60px rgba(0,0,0,0.4);
+  }
+  .feature-image img { width: 100%; display: block; }
+
+  /* ====================================================================
+     Stat grid
+     ==================================================================== */
+  .stats {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 1px;
+    background: var(--border);
+    border-radius: var(--radius);
+    overflow: hidden;
+    border: 1px solid var(--border);
+    margin: 0 auto;
+    max-width: var(--max);
+  }
+  @media (max-width: 760px) { .stats { grid-template-columns: repeat(2, 1fr); } }
+  .stat {
+    background: var(--bg);
+    padding: 36px 28px;
+  }
+  .stat .num {
+    font-size: clamp(36px, 5vw, 52px);
+    font-weight: 700;
+    line-height: 1;
+    letter-spacing: -0.03em;
+    margin-bottom: 8px;
+  }
+  .stat .num.zero { color: var(--accent); }
+  .stat .label {
+    color: var(--fg-muted);
+    font-size: 14px;
+  }
+
+  /* ====================================================================
+     Architecture / code block
+     ==================================================================== */
+  .code-card {
+    background: var(--bg-elevated);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    overflow: hidden;
+    margin-top: 32px;
+  }
+  .code-card .head {
+    padding: 14px 20px;
+    border-bottom: 1px solid var(--border);
+    display: flex; align-items: center; gap: 10px;
+    color: var(--fg-muted);
+    font-size: 13px;
+    font-family: 'JetBrains Mono', monospace;
+  }
+  .code-card .head .dots { display: flex; gap: 6px; }
+  .code-card .head .dots i {
+    width: 10px; height: 10px; border-radius: 50%;
+    background: var(--bg-card);
+  }
+  .code-card pre {
+    padding: 24px;
+    overflow-x: auto;
+    font-size: 14px;
+    line-height: 1.7;
+    color: var(--fg);
+  }
+  .code-card .comment { color: var(--fg-dim); }
+  .code-card .accent-c { color: var(--accent); }
+  .code-card .blue-c { color: var(--blue); }
+
+  /* ====================================================================
+     Install steps
+     ==================================================================== */
+  .steps {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 24px;
+    margin: 48px 0;
+  }
+  @media (max-width: 760px) { .steps { grid-template-columns: 1fr; } }
+  .step {
+    background: var(--bg-elevated);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 28px;
+  }
+  .step-num {
+    display: inline-flex; align-items: center; justify-content: center;
+    width: 32px; height: 32px;
+    border-radius: 8px;
+    background: var(--accent-soft);
+    color: var(--accent);
+    font-weight: 700;
+    font-family: 'JetBrains Mono', monospace;
+    margin-bottom: 16px;
+  }
+  .step h4 {
+    font-size: 18px; font-weight: 600;
+    letter-spacing: -0.01em;
+    margin-bottom: 10px;
+  }
+  .step p {
+    color: var(--fg-muted); font-size: 14px; line-height: 1.55;
+  }
+  .step code {
+    display: block;
+    margin-top: 12px;
+    background: var(--bg);
+    padding: 10px 12px;
+    border-radius: 6px;
+    font-size: 12px;
+    color: var(--fg);
+    border: 1px solid var(--border);
+    overflow-x: auto;
+    white-space: nowrap;
+  }
+
+  /* ====================================================================
+     Final CTA
+     ==================================================================== */
+  .final-cta {
+    text-align: center;
+    padding: clamp(80px, 14vw, 160px) var(--gutter);
+    position: relative;
+  }
+  .final-cta::before {
+    content: ''; position: absolute;
+    inset: 0;
+    background: radial-gradient(ellipse 60% 80% at 50% 50%, rgba(255,107,53,0.12), transparent 70%);
+    z-index: -1;
+    pointer-events: none;
+  }
+  .final-cta h2 { margin-left: auto; margin-right: auto; }
+  .final-cta .section-sub { margin-left: auto; margin-right: auto; }
+
+  /* ====================================================================
+     Footer
+     ==================================================================== */
+  footer {
+    border-top: 1px solid var(--border);
+    padding: 40px var(--gutter);
+    display: flex; justify-content: space-between; align-items: center;
+    flex-wrap: wrap; gap: 16px;
+    color: var(--fg-dim);
+    font-size: 13px;
+    max-width: var(--max);
+    margin: 0 auto;
+  }
+  footer a:hover { color: var(--fg); }
+  .footer-links { display: flex; gap: 24px; }
+</style>
+</head>
+<body>
+
+<nav id="nav">
+  <a href="#" class="brand">
+    <span class="brand-mark">&lt;/&gt;</span>
+    <span>Clipform</span>
+  </a>
+  <div class="nav-links">
+    <a href="#features">Features</a>
+    <a href="#how">How</a>
+    <a href="#install">Install</a>
+    <a class="pill" href="https://github.com/Dragoon0x/clipform">GitHub →</a>
+  </div>
+</nav>
+
+<!-- ============================================================ -->
+<!-- HERO                                                          -->
+<!-- ============================================================ -->
+<header class="hero">
+  <span class="eyebrow">
+    <span class="dot"></span>
+    A Figma plugin · v0.1.0 · MIT
+  </span>
+  <h1>Your moodboard <span class="accent">lives in Figma</span> now.</h1>
+  <p class="sub">
+    A reference library built into your file. Drop in images, search them by what they look like, turn selections into moodboards in one click. Free, open, no login.
+  </p>
+  <div class="cta-row">
+    <a href="#install" class="btn primary">
+      Install free
+      <span class="arrow">→</span>
+    </a>
+    <a href="https://github.com/Dragoon0x/clipform" class="btn ghost">
+      View on GitHub
+    </a>
+  </div>
+</header>
+
+<!-- floating screenshot -->
+<div class="hero-shot">
+  <img src="screenshots/hero.png" alt="Clipform plugin sitting alongside a moodboard on the Figma canvas" />
+</div>
+
+<!-- ============================================================ -->
+<!-- Pillars                                                       -->
+<!-- ============================================================ -->
+<div class="pillars">
+  <span class="chip"><strong>0</strong> servers</span>
+  <span class="chip"><strong>0</strong> logins</span>
+  <span class="chip"><strong>0</strong> subscriptions</span>
+  <span class="chip">Multiplayer by default</span>
+  <span class="chip">Runs offline after first load</span>
+  <span class="chip">~50KB plugin · 3 files</span>
+</div>
+
+<!-- ============================================================ -->
+<!-- Features                                                      -->
+<!-- ============================================================ -->
+<section id="features" class="block">
+  <div class="section-eyebrow">What it does</div>
+  <h2>Four things designers actually need.</h2>
+  <p class="section-sub">Every feature is one click away. Every change syncs to your team. Every reference lives in your Figma file.</p>
+
+  <!-- 01 Visual search -->
+  <div class="feature">
+    <div class="feature-text">
+      <span class="feature-num">01 / Visual search</span>
+      <h3>Search by what it looks like, not what it's called.</h3>
+      <p>A CLIP model runs locally in your browser. Click <strong>🔍</strong> on any card to re-sort by visual similarity, or type a query like <em>"warm sunset architecture"</em> and watch the grid resort by meaning, not keywords.</p>
+      <div class="meta">
+        <span>CLIP ViT-B/32</span>
+        <span>~40 MB</span>
+        <span>offline after first load</span>
+      </div>
+    </div>
+    <div class="feature-image">
+      <img src="screenshots/search.png" alt="AI search results in Clipform" />
+    </div>
+  </div>
+
+  <!-- 02 Arrange -->
+  <div class="feature reverse">
+    <div class="feature-text">
+      <span class="feature-num">02 / Arrange</span>
+      <h3>Seven moodboard layouts. One click. Fully editable.</h3>
+      <p>Pick references, hit Arrange, get a real Figma auto-layout frame. Grid, Masonry, Hero, Magazine, Filmstrip, Row, Polaroid. Drag items between cells after — it's all native Figma.</p>
+      <div class="meta">
+        <span>auto-layout</span>
+        <span>editable</span>
+        <span>no exports</span>
+      </div>
+    </div>
+    <div class="feature-image">
+      <img src="screenshots/arrange.png" alt="Arrange menu showing seven moodboard layouts" />
+    </div>
+  </div>
+
+  <!-- 03 Extract -->
+  <div class="feature">
+    <div class="feature-text">
+      <span class="feature-num">03 / Extract</span>
+      <h3>Turn a reference into a design system.</h3>
+      <p>One click on any reference creates real Figma variables — color, spacing, radius — plus paint styles and text styles. Apply them like any other token. Idempotent: re-run on the same ref to update in place.</p>
+      <div class="meta">
+        <span>5 color vars</span>
+        <span>8 spacing vars</span>
+        <span>6 text styles</span>
+        <span>variables, not exports</span>
+      </div>
+    </div>
+    <div class="feature-image">
+      <img src="screenshots/detail.png" alt="Detail drawer with the Extract Tokens action" />
+    </div>
+  </div>
+
+  <!-- 04 Multiplayer -->
+  <div class="feature reverse">
+    <div class="feature-text">
+      <span class="feature-num">04 / Team mode</span>
+      <h3>Multiplayer because the file is multiplayer.</h3>
+      <p>The library is just rectangles on a hidden Figma page. When a teammate adds something, you see it in real time. Reactions, comments, activity feed — all included, zero infrastructure.</p>
+      <div class="meta">
+        <span>Author attribution</span>
+        <span>Reactions</span>
+        <span>Comment threads</span>
+        <span>Live sync</span>
+      </div>
+    </div>
+    <div class="feature-image">
+      <img src="screenshots/settings.png" alt="Settings panel showing the BYOK option" />
+    </div>
+  </div>
+</section>
+
+<!-- ============================================================ -->
+<!-- Stats                                                         -->
+<!-- ============================================================ -->
+<section class="block" style="padding-top: 40px;">
+  <div class="stats">
+    <div class="stat"><div class="num">3</div><div class="label">files</div></div>
+    <div class="stat"><div class="num zero">0</div><div class="label">build steps</div></div>
+    <div class="stat"><div class="num zero">0</div><div class="label">servers required</div></div>
+    <div class="stat"><div class="num">7</div><div class="label">moodboard layouts</div></div>
+  </div>
+</section>
+
+<!-- ============================================================ -->
+<!-- How                                                           -->
+<!-- ============================================================ -->
+<section id="how" class="block">
+  <div class="section-eyebrow">Architecture</div>
+  <h2>Three files. No build step. No telemetry.</h2>
+  <p class="section-sub">The whole plugin is a manifest, a sandbox script, and one HTML file. Easy to read, easy to fork, easy to trust.</p>
+
+  <div class="code-card">
+    <div class="head">
+      <div class="dots"><i></i><i></i><i></i></div>
+      <span>clipform/</span>
+    </div>
+    <pre><span class="accent-c">manifest.json</span>    <span class="comment">Plugin metadata, permissions, allowed domains</span>
+<span class="accent-c">code.js</span>          <span class="comment">Sandbox — talks to the Figma document via figma.* API</span>
+<span class="accent-c">ui.html</span>          <span class="comment">UI iframe — rendering, capture, CLIP, multiplayer</span></pre>
+  </div>
+
+  <p style="color: var(--fg-muted); margin-top: 32px; max-width: 760px;">
+    Everything lives on a hidden page in your Figma file (<code style="color: var(--fg);">📌 Clipform Library</code>). Each reference is a rectangle with the image as a fill plus JSON metadata in <code style="color: var(--fg);">pluginData</code>. The hidden page travels with the file — Figma's multiplayer handles real-time sync for the team for free.
+  </p>
+</section>
+
+<!-- ============================================================ -->
+<!-- Install                                                       -->
+<!-- ============================================================ -->
+<section id="install" class="block">
+  <div class="section-eyebrow">Install</div>
+  <h2>Up and running in 60 seconds.</h2>
+  <p class="section-sub">No npm install, no build pipeline, no signup. Clone the repo and point Figma at it.</p>
+
+  <div class="steps">
+    <div class="step">
+      <div class="step-num">1</div>
+      <h4>Clone the repo</h4>
+      <p>Or download as a zip. Three files plus screenshots.</p>
+      <code>git clone https://github.com/Dragoon0x/clipform.git</code>
+    </div>
+    <div class="step">
+      <div class="step-num">2</div>
+      <h4>Open Figma desktop</h4>
+      <p>Plugins → Development → <strong>Import plugin from manifest…</strong> Browser-only Figma can't install dev plugins.</p>
+    </div>
+    <div class="step">
+      <div class="step-num">3</div>
+      <h4>Pick manifest.json</h4>
+      <p>Then run it any time via Plugins → Development → <strong>Clipform</strong>.</p>
+    </div>
+  </div>
+
+  <div class="cta-row" style="justify-content: flex-start; margin: 0;">
+    <a href="https://github.com/Dragoon0x/clipform" class="btn primary">
+      Get it on GitHub
+      <span class="arrow">→</span>
+    </a>
+  </div>
+</section>
+
+<!-- ============================================================ -->
+<!-- Final CTA                                                     -->
+<!-- ============================================================ -->
+<section class="final-cta">
+  <h2>Stop pasting references into Figma.</h2>
+  <p class="section-sub">Save them, search them, arrange them, extract from them — all without ever leaving the file.</p>
+  <div class="cta-row" style="margin-bottom: 0;">
+    <a href="https://github.com/Dragoon0x/clipform" class="btn primary">
+      Install Clipform
+      <span class="arrow">→</span>
+    </a>
+    <a href="#features" class="btn ghost">See what it does</a>
+  </div>
+</section>
+
+<!-- ============================================================ -->
+<!-- Footer                                                        -->
+<!-- ============================================================ -->
+<footer>
+  <div>Clipform · MIT licensed · No telemetry · No accounts</div>
+  <div class="footer-links">
+    <a href="https://github.com/Dragoon0x/clipform">GitHub</a>
+    <a href="https://github.com/Dragoon0x/clipform/blob/main/LICENSE">License</a>
+    <a href="https://github.com/Dragoon0x/clipform/blob/main/CHANGELOG.md">Changelog</a>
+  </div>
+</footer>
+
+<script>
+  // Subtle: nav gains a border once the user scrolls past the hero.
+  const nav = document.getElementById('nav');
+  const onScroll = () => nav.classList.toggle('scrolled', window.scrollY > 40);
+  window.addEventListener('scroll', onScroll, { passive: true });
+  onScroll();
+</script>
+
+</body>
+</html>
