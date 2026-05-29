@@ -2,6 +2,8 @@
 
 Thanks for poking around. Clipform is intentionally tiny — three files, no build step — so contributions stay short and obvious.
 
+> **Before contributing, read [DISCLAIMER.md](DISCLAIMER.md).** Clipform is experimental, pre-1.0 software provided AS IS with no warranty or support obligation. By submitting a PR you confirm your code is released under the [MIT License](LICENSE) and that you have no expectation of bounty, response time, or merge.
+
 ## File layout
 
 | File | What it does |

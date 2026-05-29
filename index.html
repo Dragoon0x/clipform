@@ -513,6 +513,31 @@
   .final-cta .section-sub { margin-left: auto; margin-right: auto; }
 
   /* ====================================================================
+     Disclaimer strip (right before footer)
+     ==================================================================== */
+  .disclaimer-strip {
+    background: var(--bg-soft);
+    border-top: 1px solid var(--border);
+    padding: 32px var(--gutter);
+  }
+  .disclaimer-strip-inner {
+    max-width: 900px; margin: 0 auto;
+    color: var(--fg-muted);
+    font-size: 13px;
+    line-height: 1.65;
+    text-align: center;
+  }
+  .disclaimer-strip-inner strong {
+    color: var(--fg);
+    font-weight: 600;
+  }
+  .disclaimer-strip-inner a {
+    color: var(--accent);
+    border-bottom: 1px solid currentColor;
+  }
+  .disclaimer-strip-inner a:hover { opacity: 0.8; }
+
+  /* ====================================================================
      Footer
      ==================================================================== */
   footer {
@@ -551,7 +576,7 @@
 <header class="hero">
   <span class="eyebrow">
     <span class="dot"></span>
-    A Figma plugin · v0.1.0 · MIT
+    A Figma plugin · v0.1.0 · Experimental · MIT
   </span>
   <h1>Your moodboard <span class="accent">lives in Figma</span> now.</h1>
   <p class="sub">
@@ -750,6 +775,19 @@
 </section>
 
 <!-- ============================================================ -->
+<!-- Disclaimer strip                                              -->
+<!-- ============================================================ -->
+<section class="disclaimer-strip">
+  <div class="disclaimer-strip-inner">
+    <strong>Experimental · Pre-1.0 · AS IS, no warranty.</strong>
+    Clipform is a hobby project. It may contain bugs that affect the contents of your Figma file, and any AI-derived output may be wrong or biased.
+    <strong>DYOR</strong> — read the source before installing, back up your work, and test in a throwaway file first.
+    Read the full <a href="https://github.com/Dragoon0x/clipform/blob/main/DISCLAIMER.md">disclaimer</a> before using.
+    Not affiliated with Figma, OpenAI, or any other third party.
+  </div>
+</section>
+
+<!-- ============================================================ -->
 <!-- Footer                                                        -->
 <!-- ============================================================ -->
 <footer>
@@ -757,6 +795,8 @@
   <div class="footer-links">
     <a href="https://github.com/Dragoon0x/clipform">GitHub</a>
     <a href="https://github.com/Dragoon0x/clipform/blob/main/LICENSE">License</a>
+    <a href="https://github.com/Dragoon0x/clipform/blob/main/DISCLAIMER.md">Disclaimer</a>
+    <a href="https://github.com/Dragoon0x/clipform/blob/main/SECURITY.md">Security</a>
     <a href="https://github.com/Dragoon0x/clipform/blob/main/CHANGELOG.md">Changelog</a>
   </div>
 </footer>

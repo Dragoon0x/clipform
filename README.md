@@ -5,20 +5,28 @@
 **A Figma-native moodboard plugin. Free. Open. No login.**
 
 [![License](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
+![Experimental](https://img.shields.io/badge/status-experimental-orange)
+![Pre-1.0](https://img.shields.io/badge/version-pre--1.0-yellow)
 ![No login](https://img.shields.io/badge/login-not%20required-success)
 ![No backend](https://img.shields.io/badge/backend-none-success)
-![Local-first](https://img.shields.io/badge/local-first-blue)
 ![Figma plugin](https://img.shields.io/badge/figma-plugin-black)
 
 A reference library that lives **inside** your Figma file. Drop in images from anywhere, search them by what they look like, turn selections into moodboards with one click, and turn any reference into a working design system.
 
-[Features](#features) · [Install](#install) · [Architecture](#architecture) · [Roadmap](#roadmap) · [License](#license)
+[Features](#features) · [Install](#install) · [Architecture](#architecture) · [Roadmap](#roadmap) · [Disclaimer](DISCLAIMER.md) · [License](#license)
 
 <br />
 
 ![Clipform — the plugin panel sitting next to a moodboard on the Figma canvas](screenshots/hero.png)
 
 </div>
+
+---
+
+> [!WARNING]
+> **Experimental software · Pre-1.0 · AS IS, no warranty.**
+> Clipform is a hobby project. It may contain bugs that affect the contents of your Figma file, and any AI-derived output (visual search, tagging, palettes) may be wrong or biased. **DYOR** — read [`code.js`](code.js) and [`ui.html`](ui.html) before installing, **back up your Figma files**, and **test in a throwaway file first**. Read the full [DISCLAIMER](DISCLAIMER.md) before using.
+> Not affiliated with Figma, OpenAI, Hugging Face, or any other third party.
 
 ---
 
